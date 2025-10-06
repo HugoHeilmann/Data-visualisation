@@ -19,5 +19,8 @@
   "homepage": "https://github.com/HugoHeilmann/Data-visualisation#readme",
   "devDependencies": {
     "live-server": "^1.2.2"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
   }
 }
