@@ -1,0 +1,23 @@
+{
+  "name": "data-visualisation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "live-server --port=8000 --open=index.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HugoHeilmann/Data-visualisation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HugoHeilmann/Data-visualisation/issues"
+  },
+  "homepage": "https://github.com/HugoHeilmann/Data-visualisation#readme",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
