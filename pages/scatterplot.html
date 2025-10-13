@@ -269,7 +269,7 @@
             .attr("class", "tooltip");
 
         // Chargement des données
-        d3.csv("data/worldcup_dataset.csv").then(rawData => {
+        d3.csv("../data/worldcup_dataset.csv").then(rawData => {
             // Transformation des données
             allData = rawData.map(d => ({
                 team1: d.team1,
