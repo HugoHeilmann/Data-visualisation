@@ -1,0 +1,19 @@
+# EditorConfig aide à maintenir des styles de code cohérents entre différents éditeurs
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+# Optionnel : assure que les fichiers JSON, JS, HTML, CSS, etc. utilisent aussi 4 espaces
+[*.{js,jsx,ts,tsx,html,css,scss,json,md,py,java,c,cpp,cs}]
+indent_size = 4
+
+# Pour les fichiers Makefile (qui nécessitent des tabulations réelles)
+[Makefile]
+indent_style = tab
