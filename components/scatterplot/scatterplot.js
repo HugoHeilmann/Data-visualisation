@@ -1,243 +1,21 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualisation Interactive - Données FIFA</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
+class Scatterplot extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: "open" });
+    }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+    async connectedCallback() {
+        const shadow = this.shadowRoot;
 
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 30px;
-        }
+        // Load HTML and CSS
+        const html = await fetch("../components/scatterplot/scatterplot.html").then(r => r.text());
+        const css = await fetch("../components/scatterplot/scatterplot.css").then(r => r.text());
 
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #ecf0f1;
-            border-radius: 8px;
-        }
+        this.shadowRoot.innerHTML = `
+            <style>${css}</style>
+            ${html}
+        `;
 
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .control-group label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #34495e;
-        }
-
-        select, button {
-            padding: 8px 12px;
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-            background: white;
-            font-size: 14px;
-        }
-
-        button {
-            background-color: #3498db;
-            color: white;
-            cursor: pointer;
-            border: none;
-        }
-
-        button:hover {
-            background-color: #2980b9;
-        }
-
-        .viz-container {
-            display: flex;
-            gap: 20px;
-        }
-
-        .overview {
-            flex: 2;
-        }
-
-        .details {
-            flex: 1;
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #3498db;
-        }
-
-        .scatter-plot {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-
-        .axis {
-            font-size: 12px;
-        }
-
-        .axis path,
-        .axis line {
-            fill: none;
-            stroke: #000;
-            shape-rendering: crispEdges;
-        }
-
-        .dot {
-            stroke: #fff;
-            stroke-width: 1.5px;
-            cursor: pointer;
-        }
-
-        .dot:hover {
-            stroke: #000;
-            stroke-width: 2px;
-        }
-
-        .tooltip {
-            position: absolute;
-            text-align: center;
-            padding: 8px;
-            font-size: 12px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            border-radius: 4px;
-            pointer-events: none;
-            opacity: 0;
-        }
-
-        .legend {
-            margin-top: 20px;
-        }
-
-        .legend-item {
-            display: inline-block;
-            margin-right: 20px;
-            font-size: 12px;
-        }
-
-        .legend-color {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            margin-right: 5px;
-            vertical-align: middle;
-        }
-
-        .match-info {
-            margin-bottom: 15px;
-            padding: 10px;
-            background: white;
-            border-radius: 5px;
-            border-left: 3px solid #e74c3c;
-        }
-
-        .match-info h3 {
-            margin: 0 0 10px 0;
-            color: #2c3e50;
-        }
-
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 5px 0;
-            font-size: 14px;
-        }
-
-        .stat-label {
-            font-weight: bold;
-        }
-
-        .highlight {
-            stroke: #e74c3c !important;
-            stroke-width: 3px !important;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Analyse Interactive des Matchs FIFA 2022</h1>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label>Axe X :</label>
-                <select id="x-axis">
-                    <option value="possession_team1">Possession Équipe 1 (%)</option>
-                    <option value="attempts_team1">Tentatives Équipe 1</option>
-                    <option value="passes_completed_team1">Passes Complétées Équipe 1</option>
-                    <option value="goals_team1">Buts Équipe 1</option>
-                </select>
-            </div>
-            
-            <div class="control-group">
-                <label>Axe Y :</label>
-                <select id="y-axis">
-                    <option value="goals_team1">Buts Équipe 1</option>
-                    <option value="on_target_team1">Tirs Cadrés Équipe 1</option>
-                    <option value="yellow_cards_team1">Cartons Jaunes Équipe 1</option>
-                    <option value="possession_team1">Possession Équipe 1 (%)</option>
-                </select>
-            </div>
-            
-            <div class="control-group">
-                <label>Filtrer par Phase :</label>
-                <select id="phase-filter">
-                    <option value="all">Toutes les phases</option>
-                    <option value="Group A">Groupe A</option>
-                    <option value="Group B">Groupe B</option>
-                    <option value="Group C">Groupe C</option>
-                    <option value="Group D">Groupe D</option>
-                    <option value="Group E">Groupe E</option>
-                    <option value="Group F">Groupe F</option>
-                    <option value="Group G">Groupe G</option>
-                    <option value="Group H">Groupe H</option>
-                    <option value="Round of 16">8èmes de finale</option>
-                    <option value="Quarter-final">Quarts de finale</option>
-                    <option value="Semi-final">Demi-finales</option>
-                    <option value="Final">Finale</option>
-                </select>
-            </div>
-            
-            <button id="reset-btn">Reset Vue</button>
-        </div>
-
-        <div class="viz-container">
-            <div class="overview">
-                <div id="scatter-plot"></div>
-                <div class="legend" id="legend"></div>
-            </div>
-            
-            <div class="details">
-                <h2>Détails du Match</h2>
-                <div id="match-details">
-                    <p style="color: #7f8c8d; font-style: italic;">
-                        Cliquez sur un point pour voir les détails du match
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
         // Configuration
         const margin = {top: 20, right: 20, bottom: 50, left: 60};
         const width = 700 - margin.left - margin.right;
@@ -251,13 +29,13 @@
 
         // Couleurs pour les différentes phases
         const colorScale = d3.scaleOrdinal()
-            .domain(['Group A', 'Group B', 'Group C', 'Group D', 'Group E', 'Group F', 'Group G', 'Group H', 
+            .domain(['Group A', 'Group B', 'Group C', 'Group D', 'Group E', 'Group F', 'Group G', 'Group H',
                      'Round of 16', 'Quarter-final', 'Semi-final', 'Final', 'Play-off for third place'])
             .range(['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e',
                     '#e91e63', '#ff5722', '#795548', '#ffc107', '#607d8b']);
 
         // Création du SVG principal
-        const svg = d3.select("#scatter-plot")
+        const svg = d3.select(this.shadowRoot.querySelector("#scatter-plot"))
             .append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
@@ -265,8 +43,17 @@
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
         // Tooltip
-        const tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip");
+        const tooltip = d3.select(this.shadowRoot.querySelector(".details"))
+            .append("div")
+            .attr("class", "tooltip")
+            .style("position", "absolute")
+            .style("background", "black")
+            .style("border", "1px solid #ccc")
+            .style("border-radius", "4px")
+            .style("padding", "5px 10px")
+            .style("box-shadow", "0 2px 6px rgba(0,0,0,0.2)")
+            .style("opacity", 0)
+            .style("pointer-events", "none");
 
         // Chargement des données
         d3.csv("../data/worldcup_dataset.csv").then(rawData => {
@@ -298,7 +85,7 @@
             filteredData = [...allData];
             createVisualization();
             createLegend();
-            setupEventListeners();
+            setupEventListeners.call(this);
 
         });
 
@@ -364,7 +151,7 @@
                 })
                 .on("click", function(event, d) {
                     showMatchDetails(d);
-                    highlightPoint(this);
+                    highlightPoint(event.currentTarget);
                 });
         }
 
@@ -373,7 +160,7 @@
             legend.selectAll("*").remove();
 
             const categories = [...new Set(allData.map(d => d.category))];
-            
+
             const legendItems = legend.selectAll(".legend-item")
                 .data(categories)
                 .enter().append("div")
@@ -405,8 +192,8 @@
         }
 
         function showMatchDetails(match) {
-            const detailsDiv = d3.select("#match-details");
-            
+            const detailsDiv = d3.select(shadow.querySelector("#match-details"));
+
             detailsDiv.html(`
                 <div class="match-info">
                     <h3>${match.team1} vs ${match.team2}</h3>
@@ -414,7 +201,7 @@
                         <span class="stat-label">Score:</span>
                         <span>${match.goals_team1} - ${match.goals_team2}</span>
                     </div>
-                    
+
                     <div class="stat-row">
                         <span class="stat-label">Phase:</span>
                         <span>${match.category}</span>
@@ -433,7 +220,7 @@
                 <div class="stat-row">
                     <span class="stat-label">Possession en duel:</span>
                     <span>${match.possession_in_contest}%</span>
-                </div> 
+                </div>
                 <div class="stat-row">
                     <span class="stat-label">Tentatives:</span>
                     <span>${match.attempts_team1} - ${match.attempts_team2}</span>
@@ -479,19 +266,21 @@
         }
 
         function setupEventListeners() {
+            const shadow = d3.select(this.shadowRoot);
+
             // Changement d'axes
-            d3.select("#x-axis").on("change", function() {
+            shadow.select("#x-axis").on("change", function() {
                 currentXAxis = this.value;
                 createVisualization();
             });
 
-            d3.select("#y-axis").on("change", function() {
+            shadow.select("#y-axis").on("change", function() {
                 currentYAxis = this.value;
                 createVisualization();
             });
 
             // Filtre par phase
-            d3.select("#phase-filter").on("change", function() {
+            shadow.select("#phase-filter").on("change", function() {
                 const selectedPhase = this.value;
                 if (selectedPhase === "all") {
                     filteredData = [...allData];
@@ -502,7 +291,7 @@
             });
 
             // Reset
-            d3.select("#reset-btn").on("click", function() {
+            shadow.select("#reset-btn").on("click", function() {
                 filteredData = [...allData];
                 d3.select("#x-axis").property("value", "possession_team1");
                 d3.select("#y-axis").property("value", "goals_team1");
@@ -517,6 +306,7 @@
                 `);
             });
         }
-    </script>
-</body>
-</html>
+    }
+}
+
+customElements.define("scatterplot-component", Scatterplot);
