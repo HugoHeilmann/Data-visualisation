@@ -38,7 +38,7 @@
 }
 
 #filters {
-    margin-left: 20px;
+    margin: 20px;
     padding: 0 10px;
     display: inline-flex;
     align-items: center;
@@ -47,6 +47,19 @@
     font-family: 'Roboto', sans-serif;
     border-radius: 8px;
     background-color: #2b2b2b;
+
+    label {
+        color: white;
+        font-size: 14px;
+    }
+
+    select {
+        background: #2b2b2b;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 4px;
+        padding: 3px 6px;
+    }
 }
 
 #date-slider svg {
