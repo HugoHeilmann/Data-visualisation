@@ -10,6 +10,10 @@ let dateExtent = [null, null];
 let selectedCategory = "All";
 let currentMin = null;
 let currentMax = null;
+let goalsMin = 0;
+let goalsMax = 10;
+let currentGoalsMin = 0;
+let currentGoalsMax = 10;
 
 // --- Chargement du CSV
 d3.csv("../data/worldcup_dataset.csv", d3.autoType).then((raw) => {
@@ -18,6 +22,7 @@ d3.csv("../data/worldcup_dataset.csv", d3.autoType).then((raw) => {
         team1: norm(d.team1),
         team2: norm(d.team2),
         date: new Date(d.date),
+        total_goals: (d["number of goals team1"] ?? 0) + (d["number of goals team2"] ?? 0),
     }));
 
     // Bornes temporelles globales
@@ -25,6 +30,9 @@ d3.csv("../data/worldcup_dataset.csv", d3.autoType).then((raw) => {
 
     // Création du slider de dates
     createDateSlider(dateExtent);
+
+    // Création du slider de total goals
+    createGoalsSlider();
 
     // Premier affichage du tableau
     renderTable(allData);
@@ -165,10 +173,105 @@ function createDateSlider([minDate, maxDate]) {
     updateRange();
 }
 
+function createGoalsSlider() {
+    const [minGoals, maxGoals] = d3.extent(allData, d => d.total_goals);
+    goalsMin = Math.floor(minGoals);
+    goalsMax = Math.ceil(maxGoals);
+    currentGoalsMin = goalsMin;
+    currentGoalsMax = goalsMax;
+
+    const width = 260;
+    const height = 50;
+    const margin = { left: 10, right: 10 };
+
+    const svg = d3
+        .select("#goals-slider")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height);
+
+    const scale = d3.scaleLinear()
+        .domain([goalsMin, goalsMax])
+        .range([margin.left, width - margin.right]);
+
+    // Barre de fond
+    svg.append("line")
+        .attr("x1", scale.range()[0])
+        .attr("x2", scale.range()[1])
+        .attr("y1", height / 2)
+        .attr("y2", height / 2)
+        .attr("stroke", "#555")
+        .attr("stroke-width", 4)
+        .attr("stroke-linecap", "round");
+
+    // Barre active
+    const rangeBar = svg.append("line")
+        .attr("x1", scale(currentGoalsMin))
+        .attr("x2", scale(currentGoalsMax))
+        .attr("y1", height / 2)
+        .attr("y2", height / 2)
+        .attr("stroke", "#3498db")
+        .attr("stroke-width", 6)
+        .attr("stroke-linecap", "round");
+
+    const handleMin = svg.append("circle")
+        .attr("r", 7)
+        .attr("cx", scale(currentGoalsMin))
+        .attr("cy", height / 2)
+        .attr("fill", "#9b59b6")
+        .attr("stroke", "#222")
+        .attr("cursor", "pointer");
+
+    const handleMax = svg.append("circle")
+        .attr("r", 7)
+        .attr("cx", scale(currentGoalsMax))
+        .attr("cy", height / 2)
+        .attr("fill", "#9b59b6")
+        .attr("stroke", "#222")
+        .attr("cursor", "pointer");
+
+    const label = d3.select("#goals-range-label");
+
+    function updateGoalsRange() {
+        rangeBar
+            .attr("x1", scale(currentGoalsMin))
+            .attr("x2", scale(currentGoalsMax));
+
+        label.text(`${Math.round(currentGoalsMin)} → ${Math.round(currentGoalsMax)}`);
+        applyFilters();
+    }
+
+    // Drag gauche
+    handleMin.call(
+        d3.drag().on("drag", (event) => {
+            const x = Math.max(scale.range()[0], Math.min(scale(currentGoalsMax), event.x));
+            currentGoalsMin = scale.invert(x);
+            handleMin.attr("cx", x);
+            updateGoalsRange();
+        })
+    );
+
+    // Drag droite
+    handleMax.call(
+        d3.drag().on("drag", (event) => {
+            const x = Math.min(scale.range()[1], Math.max(scale(currentGoalsMin), event.x));
+            currentGoalsMax = scale.invert(x);
+            handleMax.attr("cx", x);
+            updateGoalsRange();
+        })
+    );
+
+    updateGoalsRange();
+}
+
 // --- Application combinée des filtres (date + catégorie)
 function applyFilters() {
     let filtered = allData.filter(
-        (d) => d.date >= currentMin && d.date <= currentMax
+        (d) =>
+            d.date >= currentMin &&
+            d.date <= currentMax &&
+            d.total_goals >= currentGoalsMin &&
+            d.total_goals <= currentGoalsMax
     );
 
     if (selectedCategory !== "All") {
