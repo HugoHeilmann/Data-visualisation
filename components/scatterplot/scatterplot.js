@@ -1,3 +1,6 @@
+import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { FilterMemory } from "../../data/FilterMemory.js";
+
 class Scatterplot extends HTMLElement {
     constructor() {
         super();
@@ -21,11 +24,18 @@ class Scatterplot extends HTMLElement {
         const width = 700 - margin.left - margin.right;
         const height = 500 - margin.top - margin.bottom;
 
+        // Récupère le singleton FilterMemory
+        const filterMemory = FilterMemory.getInstance();
+        await filterMemory.waitUntilReady();
+
         // Variables globales
         let allData = [];
         let filteredData = [];
-        let currentXAxis = 'possession_team1';
-        let currentYAxis = 'goals_team1';
+        let currentXAxis = filterMemory.selectedXAxis ?? 'possession_team1';
+        let currentYAxis = filterMemory.selectedYAxis ?? 'goals_team1';
+
+        shadow.querySelector("#x-axis").value = currentXAxis;
+        shadow.querySelector("#y-axis").value = currentYAxis;
 
         // Couleurs pour les différentes phases
         const colorScale = d3.scaleOrdinal()
@@ -82,7 +92,17 @@ class Scatterplot extends HTMLElement {
                 red_cards_team2: +d["red cards team2"] || 0
             }));
 
-            filteredData = [...allData];
+            const savedCategory = filterMemory.selectedCategory ?? "All";
+            const phaseSelect = shadow.querySelector("#phase-filter");
+
+            phaseSelect.value = savedCategory === "All" ? "all" : savedCategory;
+
+            if (savedCategory === "All" || savedCategory === "all") {
+                filteredData = [...allData];
+            } else {
+                filteredData = allData.filter(d => d.category === savedCategory);
+            }
+
             createVisualization();
             createLegend();
             setupEventListeners.call(this);
@@ -271,11 +291,13 @@ class Scatterplot extends HTMLElement {
             // Changement d'axes
             shadow.select("#x-axis").on("change", function() {
                 currentXAxis = this.value;
+                filterMemory.setXAxis(currentXAxis);
                 createVisualization();
             });
 
             shadow.select("#y-axis").on("change", function() {
                 currentYAxis = this.value;
+                filterMemory.setYAxis(currentYAxis);
                 createVisualization();
             });
 
@@ -293,13 +315,16 @@ class Scatterplot extends HTMLElement {
             // Reset
             shadow.select("#reset-btn").on("click", function() {
                 filteredData = [...allData];
-                d3.select("#x-axis").property("value", "possession_team1");
-                d3.select("#y-axis").property("value", "goals_team1");
-                d3.select("#phase-filter").property("value", "all");
+                shadow.select("#x-axis").property("value", "possession_team1");
+                filterMemory.setXAxis("possession_team1");
+                shadow.select("#y-axis").property("value", "goals_team1");
+                filterMemory.setYAxis("goals_team1");
+                shadow.select("#phase-filter").property("value", "all");
+                filterMemory.setCategory("All");
                 currentXAxis = "possession_team1";
                 currentYAxis = "goals_team1";
                 createVisualization();
-                d3.select("#match-details").html(`
+                shadow.select("#match-details").html(`
                     <p style="color: #7f8c8d; font-style: italic;">
                         Cliquez sur un point pour voir les détails du match
                     </p>
