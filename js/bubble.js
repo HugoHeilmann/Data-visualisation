@@ -16,8 +16,8 @@ async function bubble() {
             BubbleChart({
                 container: container,
                 rows: rows,
-                width: 1000, 
-                height: 600
+                width: 1200, 
+                height: 700
             });
         } else {
             console.error("Le conteneur du graphique (ID: 'bubble-chart-container') n'a pas été trouvé.");
