@@ -1,5 +1,7 @@
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
+import { DonutChart } from "./DonutChart.js";
+
 export function CellGrid() {
     let teams1 = [];
     let teams2 = [];
@@ -73,121 +75,32 @@ export function CellGrid() {
                         return;
                     }
 
-                    // --- Fonction pour convertir "54%" → 54 (nombre)
                     const parsePercent = (str) => {
                         if (!str) return 0;
                         const num = parseFloat(str.replace("%", "").trim());
                         return isNaN(num) ? 0 : num;
-                    };
+                    }
 
-                    // --- Récupère les valeurs de possession
                     const p1 = parsePercent(d.match["possession team1"]);
                     const p2 = parsePercent(d.match["possession team2"]);
                     const pc = parsePercent(d.match["possession in contest"]);
 
-                    // Si aucune donnée valide
-                    if (p1 + p2 + pc === 0) {
-                        tooltip.transition()
-                            .duration(200)
-                            .style("opacity", 0)
-                            .on("end", () => tooltip.style("display", "none"));
-                        return;
-                    }
+                    if (p1 + p2 + pc === 0) return;
 
-                    // Nettoie le contenu précédent
+                    // --- Nettoyer l’ancienne popup
                     tooltip.html("");
 
-                    // --- Dimensions du donut
-                    const width = 180;
-                    const height = 180;
-                    const radius = Math.min(width, height) / 2;
-
-                    const svg = tooltip
-                        .append("svg")
-                        .attr("width", width)
-                        .attr("height", height + 80)
-                        .append("g")
-                        .attr("transform", `translate(${width / 2}, ${height / 2})`);
-
-                    // --- Données du donut
+                    // -- Données pour le DonutChart
                     const dataPie = [
-                        { label: d.t1, value: p1, color: "#00bcbcff" },
-                        { label: d.t2, value: p2, color: "#FF00FF" },
-                        { label: "Contesté", value: pc, color: "#7B68EE" }
-                    ];
+                        { label: d.t1, value: p1, teamKey: "team1", match: d.match, color: "#3498db" },
+                        { label: d.t2, value: p2, teamKey: "team2", match: d.match, color: "#9b59b6" },
+                        { label: "Contesté", value: pc, teamKey: null, match: d.match, color: "#95a5a6" }
+                    ]
 
-                    const pie = d3.pie()
-                        .value(d => d.value)
-                        .sort(null);
+                    // --- Créer le DonutChart dans la popup
+                    DonutChart(tooltip.node(), dataPie);
 
-                    const arc = d3.arc()
-                        .innerRadius(radius * 0.55)
-                        .outerRadius(radius - 6);
-
-                    // --- Tracé du donut
-                    svg.selectAll("path")
-                        .data(pie(dataPie))
-                        .enter()
-                        .append("path")
-                        .attr("d", arc)
-                        .attr("fill", d => d.data.color)
-                        .attr("stroke", "#111")
-                        .attr("stroke-width", 1)
-                        .style("opacity", 0.9);
-
-                    // --- Pourcentages sur les arcs
-                    const total = p1 + p2 + pc;
-                    const format = d3.format(".1f");
-
-                    svg.selectAll("text")
-                        .data(pie(dataPie))
-                        .enter()
-                        .append("text")
-                        .attr("transform", d => `translate(${arc.centroid(d)})`)
-                        .attr("text-anchor", "middle")
-                        .attr("dy", "0.35em")
-                        .attr("fill", "#fff")
-                        .attr("font-size", "11px")
-                        .text(d => `${format((d.data.value / total) * 100)}%`);
-
-                    // --- Texte central
-                    svg.append("text")
-                        .attr("text-anchor", "middle")
-                        .attr("dy", "0.35em")
-                        .attr("fill", "#ddd")
-                        .attr("font-size", "13px")
-                        .attr("font-weight", "bold")
-                        .text("Possession");
-
-                    // --- Légende sous le donut
-                    const legend = svg.append("g")
-                        .attr("transform", `translate(${-40}, ${radius + 30})`);
-
-                    const legendItems = legend.selectAll(".legend-item")
-                        .data(dataPie)
-                        .enter()
-                        .append("g")
-                        .attr("class", "legend-item")
-                        .attr("transform", (_, i) => `translate(0, ${i * 18})`);
-
-                    legendItems.append("rect")
-                        .attr("width", 12)
-                        .attr("height", 12)
-                        .attr("rx", 2)
-                        .attr("ry", 2)
-                        .attr("fill", d => d.color)
-                        .attr("stroke", "#111");
-
-                    legendItems.append("text")
-                        .attr("x", 18)
-                        .attr("y", 10)
-                        .attr("fill", "#fff")
-                        .attr("font-size", "11px")
-                        .text(d => d.label);
-
-                    // --- Position et affichage de la popup
-                    tooltip
-                        .style("display", "block")
+                    tooltip.style("display", "block")
                         .style("background", "#1e1e1e")
                         .style("color", "#fff")
                         .style("border", "1px solid #fff")
