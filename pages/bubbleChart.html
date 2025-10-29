@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisation Interactive - Données FIFA</title>
+    <link rel="stylesheet" href="../components/bubbleChart/bubbleChart.css">
+
+    <style>
+        body {
+            background-color: lightgray;
+        }
+        h1 {
+            text-align: center;
+            font-weight: 300;
+            color: black;
+        }
+        #main-bubble-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bubble Chart - Visualisation des Données FIFA</h1>
+
+    <a href="../index.html" class="back-button">Retour à l’accueil</a>
+
+    <div id="main-bubble-container">
+        
+        <div class="bubble-controls">
+            <label for="bubble-x">Axe X:</label>
+            <select id="bubble-x"></select>
+
+            <label for="bubble-y">Axe Y:</label>
+            <select id="bubble-y"></select>
+
+            <label for="bubble-main-phase">Phase:</label>
+            <select id="bubble-main-phase"></select>
+
+            <label id="detail-label" for="bubble-detail-phase">Détail:</label>
+            <select id="bubble-detail-phase"></select>
+        </div>
+
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="module" src="../js/bubble.js"></script>
+</body>
+</html>
