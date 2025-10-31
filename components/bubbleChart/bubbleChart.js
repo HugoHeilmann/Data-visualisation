@@ -1,57 +1,46 @@
 export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
   
-  // --- 1. MODIFICATION : Traitement des données ---
-  // Nous créons 1 item par match, au lieu de 2
+  const parseNum = (v) => {
+    if (v === null || v === undefined) return 0;
+    const n = parseFloat(String(v).replace('%','').trim());
+    return isNaN(n) ? 0 : n;
+  };
+
+  // --- Données (INCHANGÉ) ---
   const items = [];
   rows.forEach(r => {
-    const parseNum = (k) => {
-      const v = r[k];
-      if (!v) return null;
-      const n = parseFloat(String(v).replace('%','').trim());
-      return isNaN(n) ? null : n;
-    };
-    
-    const goals1 = parseNum('number of goals team1');
-    const goals2 = parseNum('number of goals team2');
-    
+    const goals1 = parseNum(r['number of goals team1']);
+    const goals2 = parseNum(r['number of goals team2']);
     items.push({ 
       team1: r.team1, 
       team2: r.team2,
       goals1: goals1,
       goals2: goals2,
-      totalGoals: (goals1 || 0) + (goals2 || 0), // Taille basée sur le total
+      totalGoals: (goals1 || 0) + (goals2 || 0),
       match: `${r.team1} vs ${r.team2}`, 
       raw: r 
     });
   });
 
-  // --- 2. MODIFICATION : Logique des sélecteurs ---
-  // Puisque nous avons 1 bulle par match, les axes X et Y 
-  // doivent pouvoir piocher dans TOUTES les stats.
+  // --- Sélecteurs (INCHANGÉ) ---
   const numericKeys = [
       'total attempts team1','yellow cards team1', 'red cards team1', 'passes team1', 'defensive pressures applied team1', 'crosses team1', 'corners team1', 'receptions between midfield and defensive lines team1', 'right inside channel team1', 'left inside channel team1',
       'total attempts team2','yellow cards team2', 'red cards team2', 'passes team2', 'defensive pressures applied team2', 'crosses team2', 'corners team2', 'receptions between midfield and defensive lines team2', 'right inside channel team2', 'left inside channel team2'
   ];
-  const allNumericKeys = Array.from(new Set(numericKeys)); // Enlève les doublons
-  
+  const allNumericKeys = Array.from(new Set(numericKeys));
   const options = ['totalGoals', 'possession team1', 'possession team2', ...allNumericKeys];
-
   const containerEl = d3.select(container);
   const xSel = containerEl.select('#bubble-x');
   const ySel = containerEl.select('#bubble-y');
   const mainPhaseSel = containerEl.select('#bubble-main-phase');
   const detailPhaseSel = containerEl.select('#bubble-detail-phase');
   const detailLabel = containerEl.select('#detail-label');
-
   const groupStages = ['Group A', 'Group B', 'Group C', 'Group D', 'Group E', 'Group F', 'Group G', 'Group H'];
   const knockoutStages = ['Round of 16', 'Quarter-final', 'Semi-final', 'Play-off for third place', 'Final'];
-  
-  // Remplissage des sélecteurs (avec la nouvelle liste 'options')
   xSel.selectAll('option').data(options).enter().append('option').attr('value', d => d).text(d => d);
   ySel.selectAll('option').data(options).enter().append('option').attr('value', d => d).text(d => d);
   xSel.property('value','possession team1');
   ySel.property('value', 'possession team2');
-
   const mainPhaseOptions = [
       { value: 'all', text: 'Toutes les phases' },
       { value: 'group', text: 'Phase de Groupes' },
@@ -59,16 +48,13 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
   ];
   mainPhaseSel.selectAll('option').data(mainPhaseOptions).enter().append('option').attr('value', d => d.value).text(d => d.text);
   mainPhaseSel.property('value', 'all');
-
   let svg = containerEl.select('svg');
   if (svg.empty()) {
       svg = containerEl.append('svg').attr('width', width).attr('height', height);
   }
-
   function updateDetailSelect() {
       const selectedPhase = mainPhaseSel.node().value;
       let detailOptions = [];
-
       if (selectedPhase === 'group') {
           detailOptions = [{ value: 'all', text: 'Tous les groupes' }, ...groupStages.map(g => ({ value: g, text: g }))];
           detailLabel.style('display', null);
@@ -82,13 +68,12 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
           detailPhaseSel.style('display', 'none');
           detailPhaseSel.property('value', 'all'); 
       }
-
       detailPhaseSel.html('');
       detailPhaseSel.selectAll('option').data(detailOptions).enter().append('option').attr('value', d => d.value).text(d => d.text);
       render();
   }
 
-  // --- Fonction Render (principales modifications ici) ---
+  // --- Fonction Render ---
   function render() {
     const goldColor = "#f1c40f";
     let isHoveringBubble = false; 
@@ -105,18 +90,14 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
     const mainFilter = mainPhaseSel.node().value;
     const detailFilter = detailPhaseSel.node().value;
 
-    // 3. MODIFICATION : Logique de mapping
-    // 'it.goals' n'existe plus, et 'get' doit chercher dans raw
     let mapped = items.map(it => {
       const get = (k) => {
         if (k === 'totalGoals') return it.totalGoals;
-        // 'k' est une clé du CSV comme "possession team1"
-        return parseFloat((it.raw[k] || '').toString().replace('%','')) || null;
+        return parseNum(it.raw[k]) || null;
       };
       return { ...it, x: get(xKey), y: get(yKey) };
     }).filter(d => d.x != null && d.y != null);
     
-    // Logique de filtrage (inchangée)
     if (mainFilter !== 'all') {
         mapped = mapped.filter(d => {
             const category = d.raw.category;
@@ -130,28 +111,19 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
 
     const mx = d3.extent(mapped, d => d.x);
     const my = d3.extent(mapped, d => d.y);
-    
-    // 4. MODIFICATION : Taille basée sur le total des buts
     const maxGoals = d3.max(mapped, d => d.totalGoals || 0) || 1;
-    // L'échelle de rayon utilise maintenant 5px comme min (pour 0 buts)
-    const rScale = d3.scaleSqrt().domain([0, maxGoals]).range([20, 50]);
-
-
+    const rScale = d3.scaleSqrt().domain([0, maxGoals]).range([8, 30]);
     const px = d3.scaleLinear().domain(mx).range([60, width-60]);
     const py = d3.scaleLinear().domain(my).range([height-60, 40]);
     const original_px = px.copy();
     const original_py = py.copy();
 
-    // Fonction de zoom (modifiée pour les groupes <g>)
     function zoomed(event) {
         const { transform } = event;
         px.domain(transform.rescaleX(original_px).domain());
         py.domain(transform.rescaleY(original_py).domain());
-
-        // MODIFICATION : Déplace les groupes <g>, pas les <circle>
         g.selectAll('g.match-bubble')
             .attr('transform', d => `translate(${px(d.x)}, ${py(d.y)})`);
-
         gx.call(d3.axisBottom(px));
         gy.call(d3.axisLeft(py));
         gx.selectAll('path, line').attr('stroke', goldColor);
@@ -165,18 +137,16 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
     const defs = svg.append('defs');
     const allTeams = Array.from(new Set(items.map(d => d.team1).concat(items.map(d => d.team2))));
     allTeams.forEach(teamName => {
-      if (!teamName) return; // Sécurité
+      if (!teamName) return;
       const flagFileName = teamName.replace(/\s/g, '_').toUpperCase() + '.png'; 
       const patternId = 'flag-' + teamName.replace(/\s/g, '_').toLowerCase(); 
       const pattern = defs.append('pattern')
         .attr('id', patternId)
-        .attr('width', 1) 
-        .attr('height', 1)
+        .attr('width', 1).attr('height', 1)
         .attr('patternContentUnits', 'objectBoundingBox'); 
       pattern.append('image')
         .attr('xlink:href', `../../assets/${flagFileName}`) 
-        .attr('width', 1)
-        .attr('height', 1)
+        .attr('width', 1).attr('height', 1)
         .attr('preserveAspectRatio', 'xMidYMid slice'); 
     });
 
@@ -186,98 +156,302 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
     const gy = svg.append('g').attr('transform', `translate(60,0)`).call(d3.axisLeft(py));
     gy.selectAll('path, line').attr('stroke', goldColor);
     gy.selectAll('text').attr('fill', goldColor);
-
     svg.append("text").attr("class", "x label").attr("text-anchor", "middle").attr("x", width / 2).attr("y", height - 20).style('font-weight', 'bold').style('fill', goldColor).text(xKey);
     svg.append("text").attr("class", "y label").attr("text-anchor", "middle").attr("y", 15).attr("x", -height / 2).attr("transform", "rotate(-90)").style('font-weight', 'bold').style('fill', goldColor).text(yKey);
 
     const g = svg.append('g');
-
-    // --- 5. MODIFICATION MAJEURE : Dessin des bulles ---
     
-    // Générateur de tarte (pie) 50/50
-    const pie = d3.pie()
-        .value(() => 50) // Deux valeurs égales
-        .sort(null);
+    const pie = d3.pie().value(() => 50).sort(null);
+    const arc = d3.arc().innerRadius(0).outerRadius(d => rScale(d.data.totalGoals || 0));
 
-    // Générateur d'arc (demi-cercle)
-    const arc = d3.arc()
-        .innerRadius(0)
-        // Le rayon extérieur est dynamique, basé sur le total des buts
-        .outerRadius(d => rScale(d.data.totalGoals || 0));
-
-    // Data join sur des groupes <g>
     const nodes = g.selectAll('g.match-bubble')
-      .data(mapped, d => d.match); // Clé unique par match
+      .data(mapped, d => d.match);
 
-    // --- ENTER ---
     const nodesEnter = nodes.enter().append('g')
         .attr('class', 'match-bubble')
-        // Positionne le groupe <g>
         .attr('transform', d => `translate(${px(d.x)}, ${py(d.y)})`);
 
-    // Pour chaque groupe, dessine les 2 demi-cercles
     nodesEnter.selectAll('path')
         .data(d => {
-            // Crée les données pour la tarte 50/50
             const pieData = [
-                { team: d.team1, totalGoals: d.totalGoals }, // Moitié 1
-                { team: d.team2, totalGoals: d.totalGoals }  // Moitié 2
+                { team: d.team1, totalGoals: d.totalGoals },
+                { team: d.team2, totalGoals: d.totalGoals }
             ];
             return pie(pieData);
         })
         .enter().append('path')
-        .attr('d', arc) // Dessine l'arc
-        .attr('fill', (d, i) => {
-            // d.data contient { team: '...', totalGoals: '...' }
+        .attr('d', arc)
+        .attr('fill', (d) => {
             const teamName = d.data.team;
-            if (!teamName) return '#ccc'; // Sécurité
+            if (!teamName) return '#ccc';
             return `url(#flag-${teamName.replace(/\s/g, '_').toLowerCase()})`;
         })
         .attr('stroke', '#333')
         .attr('stroke-width', 0.5);
 
-    // --- 6. MODIFICATION : Tooltip sur le groupe ---
+    // --- GESTION DES ÉVÉNEMENTS (MODIFIÉE) ---
+    
     nodesEnter
-      .on('mouseover', (event,d) => { // 'd' est l'objet match complet
+      .on('mouseover', (event,d) => { 
         isHoveringBubble = true;
         coordsTooltip.style("opacity", 0);
-        
-        const t = d3.select(container).selectAll('.bubble-tt').data([d]);
-        t.enter().append('div').attr('class','bubble-tt')
-          .merge(t)
-          .style('position','absolute')
-          .style('left',(event.pageX+8)+'px')
-          .style('top',(event.pageY+8)+'px')
-          // Nouveau contenu du tooltip
-          .html(`
-            <strong>${d.team1} vs ${d.team2}</strong><br/>
-            Score: ${d.goals1} - ${d.goals2}<br/>
-            <span style="font-size: 0.9em; color: #ccc;">(Total Buts: ${d.totalGoals})</span>
-          `);
+        d3.select(event.currentTarget).style('cursor', 'pointer');
       })
       .on('mouseout', () => {
         isHoveringBubble = false;
-        d3.select(container).selectAll('.bubble-tt').remove();
+        d3.select(event.currentTarget).style('cursor', 'default');
+      })
+      .on('click', (event, d) => {
+        event.stopPropagation();
+        
+        const ttId = "tt-match-" + d.team1.replace(/\s/g, '_') + "-" + d.team2.replace(/\s/g, '_');
+        
+        if (!d3.select(container).select("#" + ttId).empty()) {
+            d3.select("#" + ttId).raise().style('z-index', 1002);
+            return; 
+        }
+
+        const p = (key) => parseNum(d.raw[key]);
+        const perc = (val, max) => (val / (max || 1)) * 100;
+        
+        // --- Calculs pour chaque section (rétablis) ---
+        const poss1 = p('possession team1');
+        const poss2 = p('possession team2');
+        const possC = p('possession in contest');
+        
+        const l_cha1 = p('left channel team1');
+        const li_cha1 = p('left inside channel team1');
+        const l_cha2 = p('left channel team2');
+        const li_cha2 = p('left inside channel team2');
+        const maxLeft = Math.max(l_cha1 + li_cha1 + l_cha2 + li_cha2, 1);
+
+        const c_cha1 = p('central channel team1');
+        const c_cha2 = p('central channel team2');
+        const maxMid = Math.max(c_cha1 + c_cha2, 1);
+        
+        const r_cha1 = p('right channel team1');
+        const ri_cha1 = p('right inside channel team1');
+        const r_cha2 = p('right channel team2');
+        const ri_cha2 = p('right inside channel team2');
+        const maxRight = Math.max(r_cha1 + ri_cha1 + r_cha2 + ri_cha2, 1);
+
+        const inbehind1 = p('inbehind offers to receive team1');
+        const inbehind2 = p('inbehind offers to receive team2');
+        const maxBehind = Math.max(inbehind1 + inbehind2, 1);
+
+        const inbetween1 = p('inbetween offers to receive team1');
+        const inbetween2 = p('inbetween offers to receive team2');
+        const maxBetween = Math.max(inbetween1 + inbetween2, 1);
+
+        const infront1 = p('infront offers to receive team1');
+        const infront2 = p('infront offers to receive team2');
+        const maxFront = Math.max(infront1 + infront2, 1);
+        
+        const passes1 = p('passes completed team1');
+        const passes2 = p('passes completed team2');
+        const maxPasses = Math.max(passes1 + passes2, 1);
+        
+        const switch1 = p('switches of play completed team1');
+        const switch2 = p('switches of play completed team2');
+        const maxSwitch = Math.max(switch1 + switch2, 1);
+
+        const press1 = p('defensive pressures applied team1');
+        const press2 = p('defensive pressures applied team2');
+        const maxPress = Math.max(press1 + press2, 1);
+
+        const totalTir1 = p('total attempts team1');
+        const inTir1 = p('attempts inside the penalty area team1');
+        const outTir1 = p('attempts outside the penalty area  team1'); 
+        const totalTir2 = p('total attempts team2');
+        const inTir2 = p('attempts inside the penalty area  team2');
+        const outTir2 = p('attempts outside the penalty area  team2');
+        const maxTirAll = Math.max(inTir1 + outTir1 + inTir2 + outTir2, 1);
+
+        // --- MODIFICATION : HTML du Tooltip ---
+        const tooltipHTML = `
+            <div class="tt-header">
+                ${d.team1} vs ${d.team2}
+                <button class="tt-close-btn" data-id="${ttId}">×</button>
+            </div>
+            
+            <div class="tt-content">
+                <div class="tt-section">
+                    <div class="tt-title">Possession & Score</div>
+                    <div class="tt-possession-container">
+                        <div class="tt-score">${d.goals1} - ${d.goals2}</div>
+                    </div>
+                    <div class="tt-bar-chart">
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Possession</div>
+                            <div class="tt-bar-container tt-single-bar">
+                                <div class="tt-bar poss-t1" style="width: ${poss1}%;" title="${d.team1}: ${poss1}%">${poss1 > 10 ? poss1 + '%' : ''}</div>
+                                <div class="tt-bar poss-c" style="width: ${possC}%;" title="Contesté: ${possC}%">${possC > 10 ? possC + '%' : ''}</div>
+                                <div class="tt-bar poss-t2" style="width: ${poss2}%;" title="${d.team2}: ${poss2}%">${poss2 > 10 ? poss2 + '%' : ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tt-section">
+                    <div class="tt-title">Analyse Spatiale</div>
+                    <div class="tt-bar-chart">
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Nbre d'actions couloir gauche</div>
+                            <div class="tt-bar-container">
+                                <div class="tt-bar t1-light" style="width: ${perc(l_cha1, maxLeft)}%;" title="${d.team1} - Canal Gauche: ${l_cha1}">${perc(l_cha1, maxLeft) > 5 ? l_cha1 : ''}</div>
+                                <div class="tt-bar t1-dark" style="width: ${perc(li_cha1, maxLeft)}%;" title="${d.team1} - Intérieur Gauche: ${li_cha1}">${perc(li_cha1, maxLeft) > 5 ? li_cha1 : ''}</div>
+                                <div class="tt-bar t2-light" style="width: ${perc(l_cha2, maxLeft)}%;" title="${d.team2} - Canal Gauche: ${l_cha2}">${perc(l_cha2, maxLeft) > 5 ? l_cha2 : ''}</div>
+                                <div class="tt-bar t2-dark" style="width: ${perc(li_cha2, maxLeft)}%;" title="${d.team2} - Intérieur Gauche: ${li_cha2}">${perc(li_cha2, maxLeft) > 5 ? li_cha2 : ''}</div>
+                            </div>
+                        </div>
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Nbre d'actions axe central</div>
+                            <div class="tt-bar-container">
+                                <div class="tt-bar t1" style="width: ${perc(c_cha1, maxMid)}%;" title="${d.team1} - Canal Central: ${c_cha1}">${perc(c_cha1, maxMid) > 5 ? c_cha1 : ''}</div>
+                                <div class="tt-bar t2" style="width: ${perc(c_cha2, maxMid)}%;" title="${d.team2} - Canal Central: ${c_cha2}">${perc(c_cha2, maxMid) > 5 ? c_cha2 : ''}</div>
+                            </div>
+                        </div>
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Nbre d'actions couloir droit</div>
+                            <div class="tt-bar-container">
+                                <div class="tt-bar t1-light" style="width: ${perc(r_cha1, maxRight)}%;" title="${d.team1} - Canal Droit: ${r_cha1}">${perc(r_cha1, maxRight) > 5 ? r_cha1 : ''}</div>
+                                <div class="tt-bar t1-dark" style="width: ${perc(ri_cha1, maxRight)}%;" title="${d.team1} - Intérieur Droit: ${ri_cha1}">${perc(ri_cha1, maxRight) > 5 ? ri_cha1 : ''}</div>
+                                <div class="tt-bar t2-light" style="width: ${perc(r_cha2, maxRight)}%;" title="${d.team2} - Canal Droit: ${r_cha2}">${perc(r_cha2, maxRight) > 5 ? r_cha2 : ''}</div>
+                                <div class="tt-bar t2-dark" style="width: ${perc(ri_cha2, maxRight)}%;" title="${d.team2} - Intérieur Droit: ${ri_cha2}">${perc(ri_cha2, maxRight) > 5 ? ri_cha2 : ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tt-section">
+                    <div class="tt-title">Réception</div>
+                    <div class="tt-bar-chart">
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Nbre d'appels derrière la défense</div>
+                            <div class="tt-bar-container">
+                                <div class="tt-bar t1-light" style="width: ${perc(inbehind1, maxBehind)}%;" title="${d.team1} - Réception Derrière: ${inbehind1}">${perc(inbehind1, maxBehind) > 5 ? inbehind1 : ''}</div>
+                                <div class="tt-bar t2-light" style="width: ${perc(inbehind2, maxBehind)}%;" title="${d.team2} - Réception Derrière: ${inbehind2}">${perc(inbehind2, maxBehind) > 5 ? inbehind2 : ''}</div>
+                            </div>
+                        </div>
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Nbre d'appels entre les lignes</div>
+                            <div class="tt-bar-container">
+                                <div class="tt-bar t1" style="width: ${perc(inbetween1, maxBetween)}%;" title="${d.team1} - Réception Entre Lignes: ${inbetween1}">${perc(inbetween1, maxBetween) > 5 ? inbetween1 : ''}</div>
+                                <div class="tt-bar t2" style="width: ${perc(inbetween2, maxBetween)}%;" title="${d.team2} - Réception Entre Lignes: ${inbetween2}">${perc(inbetween2, maxBetween) > 5 ? inbetween2 : ''}</div>
+                            </div>
+                        </div>
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Nbre d'appels devant la défense</div>
+                            <div class="tt-bar-container">
+                                <div class="tt-bar t1-dark" style="width: ${perc(infront1, maxFront)}%;" title="${d.team1} - Réception Devant: ${infront1}">${perc(infront1, maxFront) > 5 ? infront1 : ''}</div>
+                                <div class="tt-bar t2-dark" style="width: ${perc(infront2, maxFront)}%;" title="${d.team2} - Réception Devant: ${infront2}">${perc(infront2, maxFront) > 5 ? infront2 : ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tt-section">
+                    <div class="tt-title">Passes & Défense</div>
+                    <div class="tt-bar-chart">
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Passes Complétées</div>
+                            <div class="tt-bar-container">
+                                <div class="tt-bar t1" style="width: ${perc(passes1, maxPasses)}%;" title="${d.team1} Passes: ${passes1}">${perc(passes1, maxPasses) > 10 ? passes1 : ''}</div>
+                                <div class="tt-bar t2" style="width: ${perc(passes2, maxPasses)}%;" title="${d.team2} Passes: ${passes2}">${perc(passes2, maxPasses) > 10 ? passes2 : ''}</div>
+                            </div>
+                        </div>
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Renversements de Jeu</div>
+                            <div class="tt-bar-container">
+                                <div class="tt-bar t1-light" style="width: ${perc(switch1, maxSwitch)}%;" title="${d.team1} Renversements: ${switch1}">${perc(switch1, maxSwitch) > 10 ? switch1 : ''}</div>
+                                <div class="tt-bar t2-light" style="width: ${perc(switch2, maxSwitch)}%;" title="${d.team2} Renversements: ${switch2}">${perc(switch2, maxSwitch) > 10 ? switch2 : ''}</div>
+                            </div>
+                        </div>
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Pressions Défensives</div>
+                            <div class="tt-bar-container">
+                                <div class="tt-bar t1-dark" style="width: ${perc(press1, maxPress)}%;" title="${d.team1} Pressions Défensives: ${press1}">${perc(press1, maxPress) > 10 ? press1 : ''}</div>
+                                <div class="tt-bar t2-dark" style="width: ${perc(press2, maxPress)}%;" title="${d.team2} Pressions Défensives: ${press2}">${perc(press2, maxPress) > 10 ? press2 : ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tt-section">
+                    <div class="tt-title">Tirs (${totalTir1} vs ${totalTir2})</div>
+                    <div class="tt-bar-chart">
+                        <div class="tt-bar-labeled-group">
+                            <div class="tt-bar-label">Tirs (Intérieur / Extérieur)</div>
+                            <div class="tt-bar-container tt-single-bar">
+                                <div class="tt-bar t1-inside" style="width: ${perc(inTir1, maxTirAll)}%;" title="${d.team1} Tirs intérieur zone pénalty: ${inTir1}">${perc(inTir1, maxTirAll) > 5 ? inTir1 : ''}</div>
+                                <div class="tt-bar t1-outside" style="width: ${perc(outTir1, maxTirAll)}%;" title="${d.team1} Tirs extérieur zone pénalty: ${outTir1}">${perc(outTir1, maxTirAll) > 5 ? outTir1 : ''}</div>
+                                <div class="tt-bar t2-inside" style="width: ${perc(inTir2, maxTirAll)}%;" title="${d.team2} Tirs intérieur zone pénalty: ${inTir2}">${perc(inTir2, maxTirAll) > 5 ? inTir2 : ''}</div>
+                                <div class="tt-bar t2-outside" style="width: ${perc(outTir2, maxTirAll)}%;" title="${d.team2} Tirs extérieur zone pénalty: ${outTir2}">${perc(outTir2, maxTirAll) > 5 ? outTir2 : ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // --- Création de la fenêtre (inchangé) ---
+        const ttWidth = 420; 
+        const xOffset = Math.random() * 60 - 30;
+        const yOffset = Math.random() * 60 - 30;
+        const newLeft = (window.innerWidth / 2) - (ttWidth / 2) + xOffset;
+        const newTop = window.scrollY + 100 + yOffset; 
+
+        const t = d3.select(container).append('div')
+            .attr('class', 'bubble-tt')
+            .attr('id', ttId)
+            .style('position', 'absolute')
+            .style('left', newLeft + 'px')
+            .style('top', newTop + 'px')
+            .style('z-index', 1001)
+            .html(tooltipHTML)
+            .on('mouseover', () => { isHoveringBubble = true; })
+            .on('mouseout', () => { isHoveringBubble = false; });
+        
+        // --- Attachement fermeture (inchangé) ---
+        t.select('.tt-close-btn').on('click', function(event) {
+            event.stopPropagation();
+            t.remove();
+        });
+
+        // --- Attachement DRAG (inchangé) ---
+        function dragstarted(event) {
+            d3.select(this.parentNode).raise().style('z-index', 1002);
+        }
+        function dragged(event) {
+            const ttNode = d3.select(this.parentNode);
+            const currentLeft = parseFloat(ttNode.style('left'));
+            const currentTop = parseFloat(ttNode.style('top'));
+            ttNode.style('left', (currentLeft + event.dx) + 'px');
+            ttNode.style('top', (currentTop + event.dy) + 'px');
+        }
+        function dragended(event) {
+            d3.select(this.parentNode).style('z-index', 1001);
+        }
+        t.select('.tt-header').call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        );
       });
 
-    // --- EXIT ---
     nodes.exit().remove();
       
-    // --- 7. MODIFICATION : Légende ---
-    // Les données de la légende sont basées sur le total des buts
+    // --- Légende (inchangée) ---
     const legendData = [maxGoals, Math.floor(maxGoals/2), 0]; 
     const uniqueLegendData = Array.from(new Set(legendData.filter(d => d >= 0))).sort((a,b) => b - a);
-
     const legendX = width - 120;
     const legendY = 60;
     const legend = svg.append('g').attr('class', 'bubble-legend').attr('transform', `translate(${legendX}, ${legendY})`);
-
     legend.append('text')
       .attr('x', -20).attr('y', -10).attr('text-anchor', 'middle')
       .style('font-size', '12px').style('font-weight', 'bold')
       .style('fill', goldColor)
-      .text('Total Buts'); // Texte modifié
-      
+      .text('Total Buts');
     let currentY = 0;
     uniqueLegendData.forEach(goals => {
       const r = rScale(goals);
@@ -288,11 +462,11 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
       legend.append('text')
         .attr('x', r + 5).attr('y', currentY).attr('dy', '0.35em') 
         .style('font-size', '10px').style('fill', goldColor)
-        .text(`${goals} total`); // Texte modifié
+        .text(`${goals} total`);
       currentY += r + 5; 
     });
     
-    // --- Gestion du Zoom et Coordonnées (modifié) ---
+    // --- Zoom/Pan (inchangé) ---
     const zoom = d3.zoom()
         .scaleExtent([1, 20])
         .translateExtent([[0, 0], [width, height]])
@@ -301,9 +475,7 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
 
     svg.call(zoom)
         .on("mouseover", () => {
-            if (!isHoveringBubble) {
-                coordsTooltip.style("opacity", 1);
-            }
+            if (!isHoveringBubble) coordsTooltip.style("opacity", 1);
         })
         .on("mouseout", () => {
             coordsTooltip.style("opacity", 0);
@@ -319,8 +491,8 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
                         `${xKey}: ${Math.round(xValue)}<br>
                          ${yKey}: ${Math.round(yValue)}`
                     )
-                    .style("left", (event.pageX + 15) + "px")
-                    .style("top", (event.pageY + 15) + "px");
+                    .style('left', (event.pageX + 15) + 'px')
+                    .style('top', (event.pageY + 15) + 'px');
                 } else {
                     coordsTooltip.style("opacity", 0);
                 }

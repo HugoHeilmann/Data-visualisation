@@ -1,3 +1,4 @@
+/* --- BOUTON RETOUR --- */
 .back-button {
     display: inline-flex;
     align-items: center;
@@ -24,29 +25,24 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
-.back-button:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
 
+/* --- CONTRÔLES --- */
 .bubble-controls {
     margin-bottom: 15px;
     padding: 10px 15px;
-    background-color: #2b2b2b; 
+    background-color: #2b2b2b;
     border-radius: 8px;
     display: flex;
     gap: 15px;
     flex-wrap: wrap;
     border: 1px solid #444;
 }
-
 .bubble-controls label {
     font-weight: bold;
     color: gold;
     white-space: nowrap;
     align-self: center;
 }
-
 .bubble-controls select {
     padding: 8px;
     border-radius: 4px;
@@ -56,28 +52,16 @@
     font-size: 14px;
 }
 
-.bubble-tt {
-    position: absolute;
-    border: 2px solid white;
-    border-radius: 20px;
-    color: gold;
-    padding: 10px;
-    pointer-events: none;
-    font-size: 13px;
-    z-index: 1000;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.5);
-    background-color: #2b2b2b;
-}
-
+/* --- SVG --- */
 #main-bubble-container svg {
     background-color: #2b2b2b;
     border-radius: 8px;
 }
 
+/* --- TOOLTIP DE COORDONNÉES --- */
 .bubble-coords-tt {
     position: absolute;
     background: rgba(0, 0, 0, 0.85);
-    color: #fff;
     padding: 6px 10px;
     border-radius: 4px;
     pointer-events: none;
@@ -89,3 +73,167 @@
     opacity: 0;
     transition: opacity 0.2s;
 }
+
+/* --- TOOLTIP DE MATCH (FENÊTRE) --- */
+.bubble-tt {
+    position: absolute;
+    background-color: #2b2b2b;
+    border: 2px solid #f1c40f;
+    border-radius: 12px;
+    color: #fff;
+    padding: 0;
+    pointer-events: auto;
+    font-size: 13px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+    width: 420px;
+    opacity: 0.98;
+    font-family: Arial, sans-serif;
+}
+
+/* Header déplaçable */
+.tt-header {
+    background-color: #333;
+    padding: 8px 12px;
+    cursor: move;
+    position: relative;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom: 2px solid #f1c40f;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #f1c40f;
+    text-transform: uppercase;
+}
+
+/* Bouton de fermeture (la croix) */
+.tt-close-btn {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    background: #444;
+    color: #fff;
+    border: 1px solid #666;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 20px;
+    text-align: center;
+    padding: 0;
+}
+.tt-close-btn:hover {
+    background: #e74c3c;
+    color: #fff;
+}
+
+/* Contenu du tooltip */
+.tt-content {
+    padding: 12px;
+}
+.tt-section {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 8px;
+}
+.tt-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.tt-title {
+    font-weight: bold;
+    color: #f1c40f;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+/* --- Section Possession & Score --- */
+.tt-possession-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    padding: 5px 0;
+}
+.tt-score {
+    font-size: 2.2em;
+    font-weight: bold;
+    color: #fff;
+    text-align: center;
+}
+/* Barre unique (pour possession, tirs, etc.) */
+.tt-single-bar {
+    width: 90%;
+    height: 20px;
+    border-radius: 4px;
+}
+.tt-bar.poss-t1 { background-color: #2ecc71; }
+.tt-bar.poss-t2 { background-color: #3498db; }
+.tt-bar.poss-c { background-color: #95a5a6; }
+
+/* --- Graphiques en barres (Général) --- */
+.tt-bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Groupe pour label + barre */
+.tt-bar-labeled-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px; /* Espace entre label et barre */
+}
+.tt-bar-label {
+    font-size: 0.9em;
+    color: #f1c40f; /* MODIFIÉ EN GOLD */
+    font-weight: bold;
+}
+.tt-bar-container {
+    width: 90%;
+    background-color: #444;
+    border-radius: 3px;
+    height: 16px;
+    display: flex;
+}
+.tt-bar {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85em;
+    color: #000;
+    font-weight: bold;
+    padding-right: 5px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: width 0.3s ease;
+    text-shadow: 0 0 2px rgba(255,255,255,0.4);
+}
+.tt-bar:first-child {
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+.tt-bar:last-child {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+/* Couleurs Graphiques */
+.tt-bar.t1 { background-color: #2ecc71; }
+.tt-bar.t2 { background-color: #3498db; }
+.tt-bar.t1-light { background-color: #a0f0c0; color: #333; }
+.tt-bar.t1-dark  { background-color: #27ae60; }
+.tt-bar.t2-light { background-color: #a0d0f0; color: #333; }
+.tt-bar.t2-dark  { background-color: #2980b9; }
+.tt-bar.t1-inside  { background-color: #e67e22; }
+.tt-bar.t1-outside { background-color: #f39c12; }
+.tt-bar.t2-inside  { background-color: #9b59b6; }
+.tt-bar.t2-outside { background-color: #be90d4; }
