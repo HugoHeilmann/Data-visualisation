@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>World Cup 2022 — Match Network</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header>
+    <h1>World Cup 2022 — Match Network</h1>
+  </header>
+
+  <div id="controls">
+    <label>Groupe :
+      <select id="groupFilter"></select>
+    </label>
+
+    <label>
+      <input type="checkbox" id="koOnly">
+      Knockout only
+    </label>
+  </div>
+
+  <main>
+    <div id="stage">
+      <svg id="chart"></svg>
+    </div>
+    <div id="details">Clique une équipe pour voir ses matchs et statistiques.</div>
+  </main>
+
+  <div id="tooltip" class="viz-tooltip"></div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
