@@ -6,7 +6,6 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
     return isNaN(n) ? 0 : n;
   };
 
-  // --- Données (INCHANGÉ) ---
   const items = [];
   rows.forEach(r => {
     const goals1 = parseNum(r['number of goals team1']);
@@ -22,11 +21,11 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
     });
   });
 
-  // --- Sélecteurs (INCHANGÉ) ---
   const numericKeys = [
       'total attempts team1','yellow cards team1', 'red cards team1', 'passes team1', 'defensive pressures applied team1', 'crosses team1', 'corners team1', 'receptions between midfield and defensive lines team1', 'right inside channel team1', 'left inside channel team1',
       'total attempts team2','yellow cards team2', 'red cards team2', 'passes team2', 'defensive pressures applied team2', 'crosses team2', 'corners team2', 'receptions between midfield and defensive lines team2', 'right inside channel team2', 'left inside channel team2'
   ];
+
   const allNumericKeys = Array.from(new Set(numericKeys));
   const options = ['totalGoals', 'possession team1', 'possession team2', ...allNumericKeys];
   const containerEl = d3.select(container);
@@ -52,6 +51,7 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
   if (svg.empty()) {
       svg = containerEl.append('svg').attr('width', width).attr('height', height);
   }
+  
   function updateDetailSelect() {
       const selectedPhase = mainPhaseSel.node().value;
       let detailOptions = [];
@@ -73,7 +73,6 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
       render();
   }
 
-  // --- Fonction Render ---
   function render() {
     const goldColor = "#f1c40f";
     let isHoveringBubble = false; 
@@ -188,8 +187,6 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
         })
         .attr('stroke', '#333')
         .attr('stroke-width', 0.5);
-
-    // --- GESTION DES ÉVÉNEMENTS (MODIFIÉE) ---
     
     nodesEnter
       .on('mouseover', (event,d) => { 
@@ -214,7 +211,6 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
         const p = (key) => parseNum(d.raw[key]);
         const perc = (val, max) => (val / (max || 1)) * 100;
         
-        // --- Calculs pour chaque section (rétablis) ---
         const poss1 = p('possession team1');
         const poss2 = p('possession team2');
         const possC = p('possession in contest');
@@ -267,7 +263,6 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
         const outTir2 = p('attempts outside the penalty area  team2');
         const maxTirAll = Math.max(inTir1 + outTir1 + inTir2 + outTir2, 1);
 
-        // --- MODIFICATION : HTML du Tooltip ---
         const tooltipHTML = `
             <div class="tt-header">
                 ${d.team1} vs ${d.team2}
@@ -394,7 +389,6 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
             </div>
         `;
         
-        // --- Création de la fenêtre (inchangé) ---
         const ttWidth = 420; 
         const xOffset = Math.random() * 60 - 30;
         const yOffset = Math.random() * 60 - 30;
@@ -412,13 +406,11 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
             .on('mouseover', () => { isHoveringBubble = true; })
             .on('mouseout', () => { isHoveringBubble = false; });
         
-        // --- Attachement fermeture (inchangé) ---
         t.select('.tt-close-btn').on('click', function(event) {
             event.stopPropagation();
             t.remove();
         });
 
-        // --- Attachement DRAG (inchangé) ---
         function dragstarted(event) {
             d3.select(this.parentNode).raise().style('z-index', 1002);
         }
@@ -441,7 +433,6 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
 
     nodes.exit().remove();
       
-    // --- Légende (inchangée) ---
     const legendData = [maxGoals, Math.floor(maxGoals/2), 0]; 
     const uniqueLegendData = Array.from(new Set(legendData.filter(d => d >= 0))).sort((a,b) => b - a);
     const legendX = width - 120;
@@ -466,7 +457,6 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
       currentY += r + 5; 
     });
     
-    // --- Zoom/Pan (inchangé) ---
     const zoom = d3.zoom()
         .scaleExtent([1, 20])
         .translateExtent([[0, 0], [width, height]])
@@ -500,13 +490,12 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
                 coordsTooltip.style("opacity", 0);
             }
         });
-  } // --- Fin de render() ---
+  }
 
-  // Événements
   xSel.on('change', render);
   ySel.on('change', render);
   mainPhaseSel.on('change', updateDetailSelect);
   detailPhaseSel.on('change', render);
   
-  updateDetailSelect(); // Lancement initial
+  updateDetailSelect();
 }
