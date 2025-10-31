@@ -1,0 +1,90 @@
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    background: linear-gradient(135deg, #3a3a3a, #2b2b2b);
+    color: #ffffff;
+    text-decoration: none;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+    padding: 15px;
+    margin: 1rem 0;
+    border-radius: 8px;
+
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    transition: all 0.25s ease;
+    top: 1.5rem;
+    left: 1.5rem;
+
+    &::before {
+        content: "←";
+        font-size: 1.1rem;
+    }
+
+    &:hover {
+        background: linear-gradient(135deg, #4caf50, #357a38);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+
+    &:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+}
+
+#filters {
+    margin: 20px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-family: 'Roboto', sans-serif;
+    border-radius: 8px;
+    background-color: #2b2b2b;
+
+    label {
+        color: white;
+        font-size: 14px;
+    }
+
+    select {
+        background: #2b2b2b;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 4px;
+        padding: 3px 6px;
+    }
+}
+
+#date-slider svg {
+    overflow: visible;
+}
+
+#date-range-label {
+    color: #f1c40f;
+    font-weight: bold;
+    min-width: 130px;
+    text-align: center;
+    display: inline-block;
+}
+
+#chart {
+    font-family: 'Roboto', sans-serif;
+}
+
+#tooltip {
+    position: absolute;
+    display: none;
+    width: auto;
+    height: auto;
+    padding: 10px;
+    border: 2px solid white;
+    border-radius: 20px;
+    background-color: #2b2b2b;
+}

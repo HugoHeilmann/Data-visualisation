@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Visualisation Chart</title>
+    <link rel="stylesheet" href="../styles/chart.css" />
+</head>
+<body>
+    <a href="../index.html" class="back-button">Retour à l’accueil</a>
+
+    <div id="filters">
+        <label>📅 Période :</label>
+        <div id="date-slider"></div>
+        <span id="date-range-label"></span>
+
+
+        <label for="filter-category">&nbsp;Phase :</label>
+        <select id="filter-category">
+            <option value="All">Toutes</option>
+        </select>
+
+        <label>⚽ Nombre total de buts :</label>
+        <div id="goals-slider"></div>
+        <span id="goals-range-label"></span>
+    </div>
+
+    <div id="chart"></div>
+
+    <div id="tooltip"></div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="module" src="../js/chart.js"></script>
+</body>
+</html>
