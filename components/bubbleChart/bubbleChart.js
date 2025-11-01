@@ -1,4 +1,6 @@
-export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
+import { FilterMemory } from "../../data/FilterMemory.js";
+
+export async function BubbleChart({ container, rows, width = 1200, height = 700 }) {
 
     const parseNum = (v) => {
     if (v === null || v === undefined) return 0;
@@ -10,14 +12,14 @@ const items = [];
 rows.forEach(r => {
     const goals1 = parseNum(r['number of goals team1']);
     const goals2 = parseNum(r['number of goals team2']);
-    items.push({ 
-    team1: r.team1, 
+    items.push({
+    team1: r.team1,
     team2: r.team2,
     goals1: goals1,
     goals2: goals2,
     totalGoals: (goals1 || 0) + (goals2 || 0),
-    match: `${r.team1} vs ${r.team2}`, 
-    raw: r 
+    match: `${r.team1} vs ${r.team2}`,
+    raw: r
     });
 });
 
@@ -34,19 +36,28 @@ const ySel = containerEl.select('#bubble-y');
 const mainPhaseSel = containerEl.select('#bubble-main-phase');
 const detailPhaseSel = containerEl.select('#bubble-detail-phase');
 const detailLabel = containerEl.select('#detail-label');
+
+// Filters memory
+const filterMemory = FilterMemory.getInstance();
+await filterMemory.waitUntilReady();
+const savedBubbleX = filterMemory.selectedBubbleXAxis ?? 'possession team1';
+const savedBubbleY = filterMemory.selectedBubbleYAxis ?? 'possession team2';
+const savedBubbleMainPhase = filterMemory.selectedBubbleMainPhase ?? 'all';
+const savedBubbleDetailPhase = filterMemory.selectedBubbleDetailPhase ?? 'all';
+
 const groupStages = ['Group A', 'Group B', 'Group C', 'Group D', 'Group E', 'Group F', 'Group G', 'Group H'];
 const knockoutStages = ['Round of 16', 'Quarter-final', 'Semi-final', 'Play-off for third place', 'Final'];
 xSel.selectAll('option').data(options).enter().append('option').attr('value', d => d).text(d => d);
 ySel.selectAll('option').data(options).enter().append('option').attr('value', d => d).text(d => d);
-xSel.property('value','possession team1');
-ySel.property('value', 'possession team2');
+xSel.property('value', savedBubbleX);
+ySel.property('value', savedBubbleY);
 const mainPhaseOptions = [
     { value: 'all', text: 'Toutes les phases' },
     { value: 'group', text: 'Phase de Groupes' },
     { value: 'knockout', text: 'Phase Éliminatoire' }
 ];
 mainPhaseSel.selectAll('option').data(mainPhaseOptions).enter().append('option').attr('value', d => d.value).text(d => d.text);
-mainPhaseSel.property('value', 'all');
+mainPhaseSel.property('value', savedBubbleMainPhase);
 let svg = containerEl.select('svg');
 if (svg.empty()) {
     svg = containerEl.append('svg').attr('width', width).attr('height', height);
@@ -55,27 +66,55 @@ if (svg.empty()) {
 function updateDetailSelect() {
     const selectedPhase = mainPhaseSel.node().value;
     let detailOptions = [];
+
     if (selectedPhase === 'group') {
-        detailOptions = [{ value: 'all', text: 'Tous les groupes' }, ...groupStages.map(g => ({ value: g, text: g }))];
+        detailOptions = [
+            { value: 'all', text: 'Tous les groupes' },
+            ...groupStages.map(g => ({ value: g, text: g }))
+        ];
         detailLabel.style('display', null);
         detailPhaseSel.style('display', null);
     } else if (selectedPhase === 'knockout') {
-        detailOptions = [{ value: 'all', text: 'Toutes les étapes' }, ...knockoutStages.map(k => ({ value: k, text: k }))];
+        detailOptions = [
+            { value: 'all', text: 'Toutes les étapes' },
+            ...knockoutStages.map(k => ({ value: k, text: k }))
+        ];
         detailLabel.style('display', null);
         detailPhaseSel.style('display', null);
     } else {
+        // Si "Toutes les phases"
+        detailOptions = [];
         detailLabel.style('display', 'none');
         detailPhaseSel.style('display', 'none');
-        detailPhaseSel.property('value', 'all'); 
     }
+
+    // 🧠 On vide et on recharge les options
     detailPhaseSel.html('');
-    detailPhaseSel.selectAll('option').data(detailOptions).enter().append('option').attr('value', d => d.value).text(d => d.text);
+    detailPhaseSel
+        .selectAll('option')
+        .data(detailOptions)
+        .enter()
+        .append('option')
+        .attr('value', d => d.value)
+        .text(d => d.text);
+
+    // 🧠 On restaure la valeur sauvegardée (si valide)
+    const savedValue = filterMemory.selectedBubbleDetailPhase;
+    const isValid = detailOptions.some(opt => opt.value === savedValue);
+    if (isValid) {
+        detailPhaseSel.property('value', savedValue);
+    } else {
+        // sinon on remet sur "all"
+        detailPhaseSel.property('value', 'all');
+        filterMemory.setBubbleDetailPhase('all');
+    }
+
     render();
 }
 
 function render() {
     const goldColor = "#f1c40f";
-    let isHoveringBubble = false; 
+    let isHoveringBubble = false;
 
     let coordsTooltip = d3.select(container).select(".bubble-coords-tt");
     if (coordsTooltip.empty()) {
@@ -96,7 +135,7 @@ function render() {
     };
     return { ...it, x: get(xKey), y: get(yKey) };
     }).filter(d => d.x != null && d.y != null);
-    
+
     if (mainFilter !== 'all') {
         mapped = mapped.filter(d => {
             const category = d.raw.category;
@@ -131,22 +170,22 @@ function render() {
         gy.selectAll('text').attr('fill', goldColor);
     }
 
-    svg.html(''); 
+    svg.html('');
 
     const defs = svg.append('defs');
     const allTeams = Array.from(new Set(items.map(d => d.team1).concat(items.map(d => d.team2))));
     allTeams.forEach(teamName => {
     if (!teamName) return;
-    const flagFileName = teamName.replace(/\s/g, '_').toUpperCase() + '.png'; 
-    const patternId = 'flag-' + teamName.replace(/\s/g, '_').toLowerCase(); 
+    const flagFileName = teamName.replace(/\s/g, '_').toUpperCase() + '.png';
+    const patternId = 'flag-' + teamName.replace(/\s/g, '_').toLowerCase();
     const pattern = defs.append('pattern')
         .attr('id', patternId)
         .attr('width', 1).attr('height', 1)
-        .attr('patternContentUnits', 'objectBoundingBox'); 
+        .attr('patternContentUnits', 'objectBoundingBox');
     pattern.append('image')
-        .attr('xlink:href', `../../assets/${flagFileName}`) 
+        .attr('xlink:href', `../../assets/${flagFileName}`)
         .attr('width', 1).attr('height', 1)
-        .attr('preserveAspectRatio', 'xMidYMid slice'); 
+        .attr('preserveAspectRatio', 'xMidYMid slice');
     });
 
     const gx = svg.append('g').attr('transform', `translate(0,${height-60})`).call(d3.axisBottom(px));
@@ -159,7 +198,7 @@ function render() {
     svg.append("text").attr("class", "y label").attr("text-anchor", "middle").attr("y", 15).attr("x", -height / 2).attr("transform", "rotate(-90)").style('font-weight', 'bold').style('fill', goldColor).text(yKey);
 
     const g = svg.append('g');
-    
+
     const pie = d3.pie().value(() => 50).sort(null);
     const arc = d3.arc().innerRadius(0).outerRadius(d => rScale(d.data.totalGoals || 0));
 
@@ -187,9 +226,9 @@ function render() {
         })
         .attr('stroke', '#333')
         .attr('stroke-width', 0.5);
-    
+
     nodesEnter
-    .on('mouseover', (event,d) => { 
+    .on('mouseover', (event,d) => {
         isHoveringBubble = true;
         coordsTooltip.style("opacity", 0);
         d3.select(event.currentTarget).style('cursor', 'pointer');
@@ -200,21 +239,21 @@ function render() {
     })
     .on('click', (event, d) => {
         event.stopPropagation();
-        
+
         const ttId = "tt-match-" + d.team1.replace(/\s/g, '_') + "-" + d.team2.replace(/\s/g, '_');
-        
+
         if (!d3.select(container).select("#" + ttId).empty()) {
             d3.select("#" + ttId).raise().style('z-index', 1002);
-            return; 
+            return;
         }
 
         const p = (key) => parseNum(d.raw[key]);
         const perc = (val, max) => (val / (max || 1)) * 100;
-        
+
         const poss1 = p('possession team1');
         const poss2 = p('possession team2');
         const possC = p('possession in contest');
-        
+
         const l_cha1 = p('left channel team1');
         const li_cha1 = p('left inside channel team1');
         const l_cha2 = p('left channel team2');
@@ -224,7 +263,7 @@ function render() {
         const c_cha1 = p('central channel team1');
         const c_cha2 = p('central channel team2');
         const maxMid = Math.max(c_cha1 + c_cha2, 1);
-        
+
         const r_cha1 = p('right channel team1');
         const ri_cha1 = p('right inside channel team1');
         const r_cha2 = p('right channel team2');
@@ -242,11 +281,11 @@ function render() {
         const infront1 = p('infront offers to receive team1');
         const infront2 = p('infront offers to receive team2');
         const maxFront = Math.max(infront1 + infront2, 1);
-        
+
         const passes1 = p('passes completed team1');
         const passes2 = p('passes completed team2');
         const maxPasses = Math.max(passes1 + passes2, 1);
-        
+
         const switch1 = p('switches of play completed team1');
         const switch2 = p('switches of play completed team2');
         const maxSwitch = Math.max(switch1 + switch2, 1);
@@ -257,7 +296,7 @@ function render() {
 
         const totalTir1 = p('total attempts team1');
         const inTir1 = p('attempts inside the penalty area team1');
-        const outTir1 = p('attempts outside the penalty area  team1'); 
+        const outTir1 = p('attempts outside the penalty area  team1');
         const totalTir2 = p('total attempts team2');
         const inTir2 = p('attempts inside the penalty area  team2');
         const outTir2 = p('attempts outside the penalty area  team2');
@@ -268,7 +307,7 @@ function render() {
                 ${d.team1} vs ${d.team2}
                 <button class="tt-close-btn" data-id="${ttId}">×</button>
             </div>
-            
+
             <div class="tt-content">
                 <div class="tt-section">
                     <div class="tt-title">Possession & Score</div>
@@ -286,7 +325,7 @@ function render() {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="tt-section">
                     <div class="tt-title">Analyse Spatiale</div>
                     <div class="tt-bar-chart">
@@ -371,7 +410,7 @@ function render() {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="tt-section">
                     <div class="tt-title">Tirs (${totalTir1} vs ${totalTir2})</div>
                     <div class="tt-bar-chart">
@@ -388,12 +427,12 @@ function render() {
                 </div>
             </div>
         `;
-        
-        const ttWidth = 420; 
+
+        const ttWidth = 420;
         const xOffset = Math.random() * 60 - 30;
         const yOffset = Math.random() * 60 - 30;
         const newLeft = (window.innerWidth / 2) - (ttWidth / 2) + xOffset;
-        const newTop = window.scrollY + 100 + yOffset; 
+        const newTop = window.scrollY + 100 + yOffset;
 
         const t = d3.select(container).append('div')
             .attr('class', 'bubble-tt')
@@ -405,7 +444,7 @@ function render() {
             .html(tooltipHTML)
             .on('mouseover', () => { isHoveringBubble = true; })
             .on('mouseout', () => { isHoveringBubble = false; });
-        
+
         t.select('.tt-close-btn').on('click', function(event) {
             event.stopPropagation();
             t.remove();
@@ -432,8 +471,8 @@ function render() {
     });
 
     nodes.exit().remove();
-    
-    const legendData = [maxGoals, Math.floor(maxGoals/2), 0]; 
+
+    const legendData = [maxGoals, Math.floor(maxGoals/2), 0];
     const uniqueLegendData = Array.from(new Set(legendData.filter(d => d >= 0))).sort((a,b) => b - a);
     const legendX = width - 120;
     const legendY = 60;
@@ -446,22 +485,22 @@ function render() {
     let currentY = 0;
     uniqueLegendData.forEach(goals => {
     const r = rScale(goals);
-    currentY += r; 
+    currentY += r;
     legend.append('circle')
         .attr('cx', 0).attr('cy', currentY).attr('r', r)
         .attr('fill', goldColor).attr('fill-opacity', 0.5).attr('stroke', goldColor);
     legend.append('text')
-        .attr('x', r + 5).attr('y', currentY).attr('dy', '0.35em') 
+        .attr('x', r + 5).attr('y', currentY).attr('dy', '0.35em')
         .style('font-size', '10px').style('fill', goldColor)
         .text(`${goals} total`);
-    currentY += r + 5; 
+    currentY += r + 5;
     });
-    
+
     const zoom = d3.zoom()
         .scaleExtent([1, 20])
         .translateExtent([[0, 0], [width, height]])
         .extent([[0, 0], [width, height]])
-        .on("zoom", zoomed); 
+        .on("zoom", zoomed);
 
     svg.call(zoom)
         .on("mouseover", () => {
@@ -471,10 +510,10 @@ function render() {
             coordsTooltip.style("opacity", 0);
         })
         .on("mousemove", (event) => {
-            if (event.buttons === 0 && !isHoveringBubble) { 
+            if (event.buttons === 0 && !isHoveringBubble) {
                 const [mouseX, mouseY] = d3.pointer(event);
                 if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) {
-                    coordsTooltip.style("opacity", 1); 
+                    coordsTooltip.style("opacity", 1);
                     const xValue = px.invert(mouseX);
                     const yValue = py.invert(mouseY);
                     coordsTooltip.html(
@@ -492,10 +531,26 @@ function render() {
         });
 }
 
-xSel.on('change', render);
-ySel.on('change', render);
-mainPhaseSel.on('change', updateDetailSelect);
-detailPhaseSel.on('change', render);
+xSel.on('change', function () {
+    const newVal = this.value;
+    filterMemory.setBubbleXAxis(newVal);
+    render();
+});
+ySel.on('change', function () {
+    const newVal = this.value;
+    filterMemory.setBubbleYAxis(newVal);
+    render();
+});
+mainPhaseSel.on('change', function () {
+    const newVal = this.value;
+    filterMemory.setBubbleMainPhase(newVal);
+    updateDetailSelect();
+});
+detailPhaseSel.on('change', function () {
+    const newVal = this.value;
+    filterMemory.setBubbleDetailPhase(newVal);
+    render();
+});
 
 updateDetailSelect();
 }

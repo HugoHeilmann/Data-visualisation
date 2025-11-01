@@ -16,6 +16,10 @@ export class FilterMemory {
         this.selectedCategory = "All";
         this.selectedXAxis = "possession_team1";
         this.selectedYAxis = "goals_team1";
+        this.selectedBubbleXAxis = "possession team1";
+        this.selectedBubbleYAxis = "possession team2";
+        this.selectedBubbleMainPhase = "all";
+        this.selectedBubbleDetailPhase = "all";
         this.timestamp = Date.now();
 
         this.loadFromStorage();
@@ -91,6 +95,26 @@ export class FilterMemory {
         this.saveToStorage();
     }
 
+    setBubbleXAxis(axis) {
+        this.selectedBubbleXAxis = axis;
+        this.saveToStorage();
+    }
+
+    setBubbleYAxis(axis) {
+        this.selectedBubbleYAxis = axis;
+        this.saveToStorage();
+    }
+
+    setBubbleMainPhase(phase) {
+        this.selectedBubbleMainPhase = phase;
+        this.saveToStorage();
+    }
+
+    setBubbleDetailPhase(phase) {
+        this.selectedBubbleDetailPhase = phase;
+        this.saveToStorage();
+    }
+
     saveToStorage() {
         const data = {
             dateMin: this.dateMin?.toISOString() ?? null,
@@ -99,7 +123,11 @@ export class FilterMemory {
             goalsMax: this.goalsMax,
             selectedCategory: this.selectedCategory,
             selectedXAxis: this.selectedXAxis,
-            selectedYAxis: this.selectedYAxis
+            selectedYAxis: this.selectedYAxis,
+            selectedBubbleXAxis: this.selectedBubbleXAxis,
+            selectedBubbleYAxis: this.selectedBubbleYAxis,
+            selectedBubbleMainPhase: this.selectedBubbleMainPhase,
+            selectedBubbleDetailPhase: this.selectedBubbleDetailPhase
         };
         localStorage.setItem("filterMemory", JSON.stringify(data));
     }
@@ -118,6 +146,10 @@ export class FilterMemory {
             this.selectedCategory = parsed.selectedCategory ?? "All";
             this.selectedXAxis = parsed.selectedXAxis ?? "possession_team1";
             this.selectedYAxis = parsed.selectedYAxis ?? "goals_team1";
+            this.selectedBubbleXAxis = parsed.selectedBubbleXAxis ?? "possession team1";
+            this.selectedBubbleYAxis = parsed.selectedBubbleYAxis ?? "possession team2";
+            this.selectedBubbleMainPhase = parsed.selectedBubbleMainPhase ?? "all";
+            this.selectedBubbleDetailPhase = parsed.selectedBubbleDetailPhase ?? "all";
         } catch (error) {
             console.error("Erreur de parsing de la mémoire :", error);
         }
