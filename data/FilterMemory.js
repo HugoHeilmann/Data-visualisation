@@ -20,6 +20,7 @@ export class FilterMemory {
         this.selectedBubbleYAxis = "possession team2";
         this.selectedBubbleMainPhase = "all";
         this.selectedBubbleDetailPhase = "all";
+        this.koOnly = false;
         this.timestamp = Date.now();
 
         this.loadFromStorage();
@@ -115,6 +116,11 @@ export class FilterMemory {
         this.saveToStorage();
     }
 
+    setKoOnly(value) {
+        this.koOnly = value;
+        this.saveToStorage();
+    }
+
     saveToStorage() {
         const data = {
             dateMin: this.dateMin?.toISOString() ?? null,
@@ -127,7 +133,8 @@ export class FilterMemory {
             selectedBubbleXAxis: this.selectedBubbleXAxis,
             selectedBubbleYAxis: this.selectedBubbleYAxis,
             selectedBubbleMainPhase: this.selectedBubbleMainPhase,
-            selectedBubbleDetailPhase: this.selectedBubbleDetailPhase
+            selectedBubbleDetailPhase: this.selectedBubbleDetailPhase,
+            koOnly: this.koOnly
         };
         localStorage.setItem("filterMemory", JSON.stringify(data));
     }
@@ -150,6 +157,7 @@ export class FilterMemory {
             this.selectedBubbleYAxis = parsed.selectedBubbleYAxis ?? "possession team2";
             this.selectedBubbleMainPhase = parsed.selectedBubbleMainPhase ?? "all";
             this.selectedBubbleDetailPhase = parsed.selectedBubbleDetailPhase ?? "all";
+            this.koOnly = parsed.koOnly ?? false;
         } catch (error) {
             console.error("Erreur de parsing de la mémoire :", error);
         }

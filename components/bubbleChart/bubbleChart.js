@@ -99,7 +99,13 @@ function updateDetailSelect() {
         .text(d => d.text);
 
     // 🧠 On restaure la valeur sauvegardée (si valide)
-    const savedValue = filterMemory.selectedBubbleDetailPhase;
+    let savedValue = filterMemory.selectedBubbleDetailPhase;
+    if (savedValue && /^[A-H]$/i.test(savedValue)) {
+        // Exemple : "F" → "Group F"
+        savedValue = `Group ${savedValue.toUpperCase()}`;
+    } else if (savedValue === "ALL") {
+        savedValue = "all";
+    }
     const isValid = detailOptions.some(opt => opt.value === savedValue);
     if (isValid) {
         detailPhaseSel.property('value', savedValue);
