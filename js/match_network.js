@@ -1,5 +1,6 @@
 // === main.js ===
 // D3 v7 — FIFA World Cup 2022 Network Visualization (dark mode + labels)
+import { FilterMemory } from "../data/FilterMemory.js";
 
 const margin = { top: 20, right: 20, bottom: 20, left: 20 };
 const PANEL_W = 340;
@@ -25,6 +26,8 @@ svg.call(zoom);
 const groupFilter = d3.select("#groupFilter");
 const koOnly = d3.select("#koOnly");
 const details = d3.select("#details");
+
+const filterMemory = FilterMemory.getInstance();
 
 const ICON_PATH = "../assets/";
 const ICON_SIZE = 30, ICON_R = ICON_SIZE / 2;
@@ -62,14 +65,30 @@ function computeCenters(){ return {
   E:[W*0.2,H*0.62], F:[W*0.4,H*0.62], G:[W*0.6,H*0.62], H:[W*0.8,H*0.62]
 };}
 
-function init(){
-  d3.csv("../data/worldcup_dataset.csv").then(raw => boot(raw));
-  groupFilter.on("change", refresh);
-  koOnly.on("change", refresh);
+async function init(){
+    await filterMemory.waitUntilReady();
+    d3.csv("../data/worldcup_dataset.csv").then(raw => boot(raw));
+    groupFilter.on("change", onGroupChange);
+    koOnly.on("change", function () {
+        const isChecked = this.checked;
+        filterMemory.setKoOnly(isChecked);
+        refresh();
+    });
 
-  groupFilter.selectAll("option").data(
-    [{label:"ALL groups",value:"ALL"}].concat(groupLetters.map(g=>({label:`Group ${g}`,value:g})))
-  ).join("option").attr("value",d=>d.value).text(d=>d.label);
+    groupFilter.selectAll("option").data(
+        [{label:"ALL groups",value:"ALL"}].concat(groupLetters.map(g=>({label:`Group ${g}`,value:g})))
+    ).join("option").attr("value",d=>d.value).text(d=>d.label);
+
+    const savedGroupRaw = filterMemory.selectedBubbleDetailPhase || "ALL";
+    let savedGroup = "ALL";
+    if (/group\s*([A-H])/i.test(savedGroupRaw)) {
+        savedGroup = savedGroupRaw.match(/group\s*([A-H])/i)[1].toUpperCase();
+    } else if (groupLetters.includes(savedGroupRaw.toUpperCase())) {
+        savedGroup = savedGroupRaw.toUpperCase();
+    }
+
+    groupFilter.property("value", savedGroup);
+    koOnly.property("checked", filterMemory.koOnly || false);
 }
 
 function boot(raw){
@@ -116,6 +135,12 @@ async function preloadIconStatus(teams){
     img.onerror= ()=>{ ICON_STATUS.set(team,false); res(); };
     img.src = href;
   })));
+}
+
+function onGroupChange() {
+    const newVal = groupFilter.node().value;
+    filterMemory.setBubbleDetailPhase(newVal);
+    refresh();
 }
 
 function refresh(){
@@ -168,22 +193,22 @@ function refresh(){
         d3.select(this)
           .attr("stroke-opacity", 1)
           .attr("stroke-width", linkWidth(d.total) + 2);
-        
+
         // Highlight les équipes impliquées
         const team1 = getId(d.source);
         const team2 = getId(d.target);
-        
+
         nodeG.selectAll("image").filter(n => n.id === team1 || n.id === team2)
           .attr("opacity", 1)
           .style("filter", "drop-shadow(0 0 8px #38bdf8)");
-        
+
         circleG.selectAll("circle").filter(n => n.id === team1 || n.id === team2)
           .attr("stroke", "#38bdf8")
           .attr("stroke-width", 4);
-        
+
         const winner = d.g1 > d.g2 ? team1 : d.g2 > d.g1 ? team2 : null;
         const winnerText = winner ? `<br><strong style="color:#4ade80">Vainqueur: ${winner}</strong>` : '<br><strong style="color:#fbbf24">Match nul</strong>';
-        
+
         tooltip
           .style("opacity", 1)
           .style("left", (e.pageX + 10) + "px")
@@ -205,19 +230,19 @@ function refresh(){
         d3.select(this)
           .attr("stroke-opacity", .85)
           .attr("stroke-width", linkWidth(d.total));
-        
+
         // Restaurer l'apparence normale des équipes
         const team1 = getId(d.source);
         const team2 = getId(d.target);
-        
+
         nodeG.selectAll("image").filter(n => n.id === team1 || n.id === team2)
           .attr("opacity", n => ICON_STATUS.get(n.id) ? 1 : 0)
           .style("filter", "none");
-        
+
         circleG.selectAll("circle").filter(n => n.id === team1 || n.id === team2)
           .attr("stroke", n => groupColorScale(n.groupLetter) || "#60a5fa")
           .attr("stroke-width", 2);
-        
+
         tooltip.style("opacity", 0);
       }),
     update=>update
@@ -226,22 +251,22 @@ function refresh(){
         d3.select(this)
           .attr("stroke-opacity", 1)
           .attr("stroke-width", linkWidth(d.total) + 2);
-        
+
         // Highlight les équipes impliquées
         const team1 = getId(d.source);
         const team2 = getId(d.target);
-        
+
         nodeG.selectAll("image").filter(n => n.id === team1 || n.id === team2)
           .attr("opacity", 1)
           .style("filter", "drop-shadow(0 0 8px #38bdf8)");
-        
+
         circleG.selectAll("circle").filter(n => n.id === team1 || n.id === team2)
           .attr("stroke", "#38bdf8")
           .attr("stroke-width", 4);
-        
+
         const winner = d.g1 > d.g2 ? team1 : d.g2 > d.g1 ? team2 : null;
         const winnerText = winner ? `<br><strong style="color:#4ade80">Vainqueur: ${winner}</strong>` : '<br><strong style="color:#fbbf24">Match nul</strong>';
-        
+
         tooltip
           .style("opacity", 1)
           .style("left", (e.pageX + 10) + "px")
@@ -263,19 +288,19 @@ function refresh(){
         d3.select(this)
           .attr("stroke-opacity", .85)
           .attr("stroke-width", linkWidth(d.total));
-        
+
         // Restaurer l'apparence normale des équipes
         const team1 = getId(d.source);
         const team2 = getId(d.target);
-        
+
         nodeG.selectAll("image").filter(n => n.id === team1 || n.id === team2)
           .attr("opacity", n => ICON_STATUS.get(n.id) ? 1 : 0)
           .style("filter", "none");
-        
+
         circleG.selectAll("circle").filter(n => n.id === team1 || n.id === team2)
           .attr("stroke", n => groupColorScale(n.groupLetter) || "#60a5fa")
           .attr("stroke-width", 2);
-        
+
         tooltip.style("opacity", 0);
       }),
     exit=>exit.remove()
@@ -381,7 +406,7 @@ function refresh(){
       .attr("fill", d => groupColorScale(d.groupLetter) || "#94a3b8")
       .style("paint-order", "stroke")
       .attr("stroke", "#0f172a")
-      .attr("stroke-width", 2)  
+      .attr("stroke-width", 2)
       .style("pointer-events", "none")
       .text(d => d.id),
     update => update.text(d => d.id),
@@ -434,34 +459,34 @@ function lerp(a,b,t){ return a+(b-a)*t; }
 
 function showTeamDetails(teamNode) {
   currentFocusTeam = teamNode.id;
-  
+
   // Récupérer tous les matchs de cette équipe
   const teamMatches = RAW_ROWS.filter(m => m.team1 === teamNode.id || m.team2 === teamNode.id)
     .sort((a, b) => a.date - b.date);
-  
+
   if (!teamMatches.length) {
     details.html(`<h3>${teamNode.id}</h3><p>Aucun match trouvé.</p>`);
     return;
   }
-  
+
   // Calculer les statistiques
   let wins = 0, draws = 0, losses = 0;
   let goalsFor = 0, goalsAgainst = 0;
-  
+
   const matchRows = teamMatches.map(m => {
     const isTeam1 = m.team1 === teamNode.id;
     const opponent = isTeam1 ? m.team2 : m.team1;
     const gf = isTeam1 ? m.g1 : m.g2;
     const ga = isTeam1 ? m.g2 : m.g1;
-    
+
     goalsFor += gf;
     goalsAgainst += ga;
-    
+
     let result = '';
     if (gf > ga) { wins++; result = 'V'; }
     else if (gf < ga) { losses++; result = 'D'; }
     else { draws++; result = 'N'; }
-    
+
     return `
       <tr>
         <td>${fmtDateShort(m.date)}</td>
@@ -471,14 +496,14 @@ function showTeamDetails(teamNode) {
       </tr>
     `;
   }).join('');
-  
+
   const groupInfo = teamNode.groupLetter ? `Groupe ${teamNode.groupLetter}` : 'Pas de groupe';
   const koInfo = teamNode.qualifiedKO ? ' • Qualifié pour les K.O.' : '';
-  
+
   details.html(`
     <h3 style="color: ${groupColorScale(teamNode.groupLetter) || '#93c5fd'}">${teamNode.id}</h3>
     <p style="font-size:12px; color:#94a3b8; margin-bottom:12px;">${groupInfo}${koInfo}</p>
-    
+
     <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:16px;">
       <div style="background:#1e293b; padding:8px; border-radius:6px; text-align:center;">
         <div style="font-size:20px; font-weight:600; color:#4ade80;">${wins}</div>
@@ -493,12 +518,12 @@ function showTeamDetails(teamNode) {
         <div style="font-size:11px; color:#94a3b8;">Défaites</div>
       </div>
     </div>
-    
+
     <div style="background:#1e293b; padding:8px; border-radius:6px; margin-bottom:16px; text-align:center;">
       <div style="font-size:18px; font-weight:600; color:#93c5fd;">${goalsFor} : ${goalsAgainst}</div>
       <div style="font-size:11px; color:#94a3b8;">Buts marqués : encaissés (diff: ${goalsFor - goalsAgainst > 0 ? '+' : ''}${goalsFor - goalsAgainst})</div>
     </div>
-    
+
     <h4 style="font-size:14px; color:#a5b4fc; margin-bottom:8px;">Historique des matchs</h4>
     <table style="width:100%; font-size:12px;">
       <thead>

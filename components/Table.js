@@ -44,7 +44,7 @@ export function Table() {
                 .attr("dominant-baseline", "middle")
                 .attr("fill", "white")
                 .attr("font-weight", "bold")
-                .text("Team1 / Team2");
+                .text("Local / Visiteur");
 
             // --- Créer les sous-composants
             const headerRow = HeaderRow()

@@ -37,8 +37,6 @@ export function HeaderColumn() {
                 };
             });
 
-            console.log("statsByTeam", statsByTeam);
-
             // --- Groupe principal pour chaque équipe
             const groups = g.selectAll("g.team-row").data(teams, (d) => d);
 

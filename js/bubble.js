@@ -1,22 +1,23 @@
 import { BubbleChart } from "../components/bubbleChart/bubbleChart.js";
+import { FilterMemory } from "../data/FilterMemory.js";
 
 async function bubble() {
     try {
 
         const rows = await d3.csv("../data/worldcup_dataset.csv");
-        
+
         if (!rows || rows.length === 0) {
             console.error("Les données CSV n'ont pas pu être chargées ou le fichier est vide.");
             return;
         }
 
         const container = document.getElementById('main-bubble-container');
-        
+
         if (container) {
             BubbleChart({
                 container: container,
                 rows: rows,
-                width: 1200, 
+                width: 1200,
                 height: 700
             });
         } else {
