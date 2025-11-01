@@ -1,79 +1,79 @@
 export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
-  
-  const parseNum = (v) => {
+
+    const parseNum = (v) => {
     if (v === null || v === undefined) return 0;
     const n = parseFloat(String(v).replace('%','').trim());
     return isNaN(n) ? 0 : n;
-  };
+};
 
-  const items = [];
-  rows.forEach(r => {
+const items = [];
+rows.forEach(r => {
     const goals1 = parseNum(r['number of goals team1']);
     const goals2 = parseNum(r['number of goals team2']);
     items.push({ 
-      team1: r.team1, 
-      team2: r.team2,
-      goals1: goals1,
-      goals2: goals2,
-      totalGoals: (goals1 || 0) + (goals2 || 0),
-      match: `${r.team1} vs ${r.team2}`, 
-      raw: r 
+    team1: r.team1, 
+    team2: r.team2,
+    goals1: goals1,
+    goals2: goals2,
+    totalGoals: (goals1 || 0) + (goals2 || 0),
+    match: `${r.team1} vs ${r.team2}`, 
+    raw: r 
     });
-  });
+});
 
-  const numericKeys = [
-      'total attempts team1','yellow cards team1', 'red cards team1', 'passes team1', 'defensive pressures applied team1', 'crosses team1', 'corners team1', 'receptions between midfield and defensive lines team1', 'right inside channel team1', 'left inside channel team1',
-      'total attempts team2','yellow cards team2', 'red cards team2', 'passes team2', 'defensive pressures applied team2', 'crosses team2', 'corners team2', 'receptions between midfield and defensive lines team2', 'right inside channel team2', 'left inside channel team2'
-  ];
+const numericKeys = [
+    'total attempts team1','yellow cards team1', 'red cards team1', 'passes team1', 'defensive pressures applied team1', 'crosses team1', 'corners team1', 'receptions between midfield and defensive lines team1', 'right inside channel team1', 'left inside channel team1',
+    'total attempts team2','yellow cards team2', 'red cards team2', 'passes team2', 'defensive pressures applied team2', 'crosses team2', 'corners team2', 'receptions between midfield and defensive lines team2', 'right inside channel team2', 'left inside channel team2'
+];
 
-  const allNumericKeys = Array.from(new Set(numericKeys));
-  const options = ['totalGoals', 'possession team1', 'possession team2', ...allNumericKeys];
-  const containerEl = d3.select(container);
-  const xSel = containerEl.select('#bubble-x');
-  const ySel = containerEl.select('#bubble-y');
-  const mainPhaseSel = containerEl.select('#bubble-main-phase');
-  const detailPhaseSel = containerEl.select('#bubble-detail-phase');
-  const detailLabel = containerEl.select('#detail-label');
-  const groupStages = ['Group A', 'Group B', 'Group C', 'Group D', 'Group E', 'Group F', 'Group G', 'Group H'];
-  const knockoutStages = ['Round of 16', 'Quarter-final', 'Semi-final', 'Play-off for third place', 'Final'];
-  xSel.selectAll('option').data(options).enter().append('option').attr('value', d => d).text(d => d);
-  ySel.selectAll('option').data(options).enter().append('option').attr('value', d => d).text(d => d);
-  xSel.property('value','possession team1');
-  ySel.property('value', 'possession team2');
-  const mainPhaseOptions = [
-      { value: 'all', text: 'Toutes les phases' },
-      { value: 'group', text: 'Phase de Groupes' },
-      { value: 'knockout', text: 'Phase Éliminatoire' }
-  ];
-  mainPhaseSel.selectAll('option').data(mainPhaseOptions).enter().append('option').attr('value', d => d.value).text(d => d.text);
-  mainPhaseSel.property('value', 'all');
-  let svg = containerEl.select('svg');
-  if (svg.empty()) {
-      svg = containerEl.append('svg').attr('width', width).attr('height', height);
-  }
-  
-  function updateDetailSelect() {
-      const selectedPhase = mainPhaseSel.node().value;
-      let detailOptions = [];
-      if (selectedPhase === 'group') {
-          detailOptions = [{ value: 'all', text: 'Tous les groupes' }, ...groupStages.map(g => ({ value: g, text: g }))];
-          detailLabel.style('display', null);
-          detailPhaseSel.style('display', null);
-      } else if (selectedPhase === 'knockout') {
-          detailOptions = [{ value: 'all', text: 'Toutes les étapes' }, ...knockoutStages.map(k => ({ value: k, text: k }))];
-          detailLabel.style('display', null);
-          detailPhaseSel.style('display', null);
-      } else {
-          detailLabel.style('display', 'none');
-          detailPhaseSel.style('display', 'none');
-          detailPhaseSel.property('value', 'all'); 
-      }
-      detailPhaseSel.html('');
-      detailPhaseSel.selectAll('option').data(detailOptions).enter().append('option').attr('value', d => d.value).text(d => d.text);
-      render();
-  }
+const allNumericKeys = Array.from(new Set(numericKeys));
+const options = ['totalGoals', 'possession team1', 'possession team2', ...allNumericKeys];
+const containerEl = d3.select(container);
+const xSel = containerEl.select('#bubble-x');
+const ySel = containerEl.select('#bubble-y');
+const mainPhaseSel = containerEl.select('#bubble-main-phase');
+const detailPhaseSel = containerEl.select('#bubble-detail-phase');
+const detailLabel = containerEl.select('#detail-label');
+const groupStages = ['Group A', 'Group B', 'Group C', 'Group D', 'Group E', 'Group F', 'Group G', 'Group H'];
+const knockoutStages = ['Round of 16', 'Quarter-final', 'Semi-final', 'Play-off for third place', 'Final'];
+xSel.selectAll('option').data(options).enter().append('option').attr('value', d => d).text(d => d);
+ySel.selectAll('option').data(options).enter().append('option').attr('value', d => d).text(d => d);
+xSel.property('value','possession team1');
+ySel.property('value', 'possession team2');
+const mainPhaseOptions = [
+    { value: 'all', text: 'Toutes les phases' },
+    { value: 'group', text: 'Phase de Groupes' },
+    { value: 'knockout', text: 'Phase Éliminatoire' }
+];
+mainPhaseSel.selectAll('option').data(mainPhaseOptions).enter().append('option').attr('value', d => d.value).text(d => d.text);
+mainPhaseSel.property('value', 'all');
+let svg = containerEl.select('svg');
+if (svg.empty()) {
+    svg = containerEl.append('svg').attr('width', width).attr('height', height);
+}
 
-  function render() {
+function updateDetailSelect() {
+    const selectedPhase = mainPhaseSel.node().value;
+    let detailOptions = [];
+    if (selectedPhase === 'group') {
+        detailOptions = [{ value: 'all', text: 'Tous les groupes' }, ...groupStages.map(g => ({ value: g, text: g }))];
+        detailLabel.style('display', null);
+        detailPhaseSel.style('display', null);
+    } else if (selectedPhase === 'knockout') {
+        detailOptions = [{ value: 'all', text: 'Toutes les étapes' }, ...knockoutStages.map(k => ({ value: k, text: k }))];
+        detailLabel.style('display', null);
+        detailPhaseSel.style('display', null);
+    } else {
+        detailLabel.style('display', 'none');
+        detailPhaseSel.style('display', 'none');
+        detailPhaseSel.property('value', 'all'); 
+    }
+    detailPhaseSel.html('');
+    detailPhaseSel.selectAll('option').data(detailOptions).enter().append('option').attr('value', d => d.value).text(d => d.text);
+    render();
+}
+
+function render() {
     const goldColor = "#f1c40f";
     let isHoveringBubble = false; 
 
@@ -90,11 +90,11 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
     const detailFilter = detailPhaseSel.node().value;
 
     let mapped = items.map(it => {
-      const get = (k) => {
+    const get = (k) => {
         if (k === 'totalGoals') return it.totalGoals;
         return parseNum(it.raw[k]) || null;
-      };
-      return { ...it, x: get(xKey), y: get(yKey) };
+    };
+    return { ...it, x: get(xKey), y: get(yKey) };
     }).filter(d => d.x != null && d.y != null);
     
     if (mainFilter !== 'all') {
@@ -136,14 +136,14 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
     const defs = svg.append('defs');
     const allTeams = Array.from(new Set(items.map(d => d.team1).concat(items.map(d => d.team2))));
     allTeams.forEach(teamName => {
-      if (!teamName) return;
-      const flagFileName = teamName.replace(/\s/g, '_').toUpperCase() + '.png'; 
-      const patternId = 'flag-' + teamName.replace(/\s/g, '_').toLowerCase(); 
-      const pattern = defs.append('pattern')
+    if (!teamName) return;
+    const flagFileName = teamName.replace(/\s/g, '_').toUpperCase() + '.png'; 
+    const patternId = 'flag-' + teamName.replace(/\s/g, '_').toLowerCase(); 
+    const pattern = defs.append('pattern')
         .attr('id', patternId)
         .attr('width', 1).attr('height', 1)
         .attr('patternContentUnits', 'objectBoundingBox'); 
-      pattern.append('image')
+    pattern.append('image')
         .attr('xlink:href', `../../assets/${flagFileName}`) 
         .attr('width', 1).attr('height', 1)
         .attr('preserveAspectRatio', 'xMidYMid slice'); 
@@ -164,7 +164,7 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
     const arc = d3.arc().innerRadius(0).outerRadius(d => rScale(d.data.totalGoals || 0));
 
     const nodes = g.selectAll('g.match-bubble')
-      .data(mapped, d => d.match);
+    .data(mapped, d => d.match);
 
     const nodesEnter = nodes.enter().append('g')
         .attr('class', 'match-bubble')
@@ -189,16 +189,16 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
         .attr('stroke-width', 0.5);
     
     nodesEnter
-      .on('mouseover', (event,d) => { 
+    .on('mouseover', (event,d) => { 
         isHoveringBubble = true;
         coordsTooltip.style("opacity", 0);
         d3.select(event.currentTarget).style('cursor', 'pointer');
-      })
-      .on('mouseout', () => {
+    })
+    .on('mouseout', () => {
         isHoveringBubble = false;
         d3.select(event.currentTarget).style('cursor', 'default');
-      })
-      .on('click', (event, d) => {
+    })
+    .on('click', (event, d) => {
         event.stopPropagation();
         
         const ttId = "tt-match-" + d.team1.replace(/\s/g, '_') + "-" + d.team2.replace(/\s/g, '_');
@@ -429,32 +429,32 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
             .on("drag", dragged)
             .on("end", dragended)
         );
-      });
+    });
 
     nodes.exit().remove();
-      
+    
     const legendData = [maxGoals, Math.floor(maxGoals/2), 0]; 
     const uniqueLegendData = Array.from(new Set(legendData.filter(d => d >= 0))).sort((a,b) => b - a);
     const legendX = width - 120;
     const legendY = 60;
     const legend = svg.append('g').attr('class', 'bubble-legend').attr('transform', `translate(${legendX}, ${legendY})`);
     legend.append('text')
-      .attr('x', -20).attr('y', -10).attr('text-anchor', 'middle')
-      .style('font-size', '12px').style('font-weight', 'bold')
-      .style('fill', goldColor)
-      .text('Total Buts');
+    .attr('x', -20).attr('y', -10).attr('text-anchor', 'middle')
+    .style('font-size', '12px').style('font-weight', 'bold')
+    .style('fill', goldColor)
+    .text('Total Buts');
     let currentY = 0;
     uniqueLegendData.forEach(goals => {
-      const r = rScale(goals);
-      currentY += r; 
-      legend.append('circle')
+    const r = rScale(goals);
+    currentY += r; 
+    legend.append('circle')
         .attr('cx', 0).attr('cy', currentY).attr('r', r)
         .attr('fill', goldColor).attr('fill-opacity', 0.5).attr('stroke', goldColor);
-      legend.append('text')
+    legend.append('text')
         .attr('x', r + 5).attr('y', currentY).attr('dy', '0.35em') 
         .style('font-size', '10px').style('fill', goldColor)
         .text(`${goals} total`);
-      currentY += r + 5; 
+    currentY += r + 5; 
     });
     
     const zoom = d3.zoom()
@@ -479,7 +479,7 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
                     const yValue = py.invert(mouseY);
                     coordsTooltip.html(
                         `${xKey}: ${Math.round(xValue)}<br>
-                         ${yKey}: ${Math.round(yValue)}`
+                        ${yKey}: ${Math.round(yValue)}`
                     )
                     .style('left', (event.pageX + 15) + 'px')
                     .style('top', (event.pageY + 15) + 'px');
@@ -490,12 +490,12 @@ export function BubbleChart({ container, rows, width = 1200, height = 700 }) {
                 coordsTooltip.style("opacity", 0);
             }
         });
-  }
+}
 
-  xSel.on('change', render);
-  ySel.on('change', render);
-  mainPhaseSel.on('change', updateDetailSelect);
-  detailPhaseSel.on('change', render);
-  
-  updateDetailSelect();
+xSel.on('change', render);
+ySel.on('change', render);
+mainPhaseSel.on('change', updateDetailSelect);
+detailPhaseSel.on('change', render);
+
+updateDetailSelect();
 }
