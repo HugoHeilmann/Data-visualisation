@@ -185,6 +185,14 @@ class TacticalParallelCoordinates {
         const teams = Array.from(this.teamStats.values());
         this.renderParallelCoordinates(teams);
         
+        if (!this._resizeBound) {
+            this._resizeBound = true;
+            window.addEventListener('resize', () => {
+                d3.select('#chart').selectAll('*').remove();
+                this.renderParallelCoordinates(Array.from(this.teamStats.values()));
+            });
+        }
+        
         console.log('Parallel coordinates complete!');
     }
     
@@ -211,16 +219,20 @@ class TacticalParallelCoordinates {
     renderParallelCoordinates(teams) {
         console.log('Rendering parallel coordinates visualization...');
 
-        const margin = this.margin;
-        const width = 1200;
-        const height = 500;
+    const margin = this.margin;
+    const container = document.getElementById('chart');
+    const rect = container.getBoundingClientRect();
+    const width = Math.max(300, rect.width);
+    const height = Math.max(300, rect.height);
+    const baseWidth = 1200;
+    const baseHeight = 500;
+    const k = Math.min(width / baseWidth, height / baseHeight);
 
         const svg = d3.select('#chart')
             .append('svg')
-            .attr('width', '100%')
-            .attr('height', '100%')
-            .attr('viewBox', `0 0 ${width} ${height}`)
-            .attr('preserveAspectRatio', 'xMidYMid meet')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('preserveAspectRatio', 'none')
             .style('max-width', '100%')
             .style('max-height', '100%');
 
@@ -262,7 +274,9 @@ class TacticalParallelCoordinates {
             return d3.line()(metrics.map(m => [x(m.key), y[m.key](d[m.key]) ]));
         }
 
-        const groupColors = d3.scaleOrdinal(d3.schemeCategory10);
+    const groupColors = d3.scaleOrdinal(d3.schemeCategory10);
+    const strokeW = Math.max(2, 3 * k);
+    const strokeHoverW = Math.max(3, 6 * k);
 
         g.append('g')
             .attr('class', 'background')
@@ -281,16 +295,10 @@ class TacticalParallelCoordinates {
             .enter().append('path')
             .attr('d', path)
             .attr('stroke', d => groupColors(Array.from(d.phases)[0]))
-            .attr('stroke-width', 2)
+            .attr('stroke-width', strokeW)
             .attr('fill', 'none')
             .attr('opacity', 0.9)
             .style('cursor', 'pointer')
-            .on('mouseover', (event, d) => {
-                d3.select(event.target).attr('stroke-width', 4).attr('opacity', 1);
-            })
-            .on('mouseout', (event, d) => {
-                d3.select(event.target).attr('stroke-width', 2).attr('opacity', 0.9);
-            })
             .on('click', (event, d) => {
                 console.log(`Équipe sélectionnée: ${d.name}`);
                 
@@ -318,17 +326,17 @@ class TacticalParallelCoordinates {
 
         axisGroup.append('text')
             .attr('class', 'axis-label')
-            .attr('y', -7)
+            .attr('y', -7 * k)
             .attr('text-anchor', 'middle')
-            .style('font-size', '10px')
+            .style('font-size', `${Math.max(8, 10 * k)}px`)
             .text(d => d.label);
 
         svg.append('text')
             .attr('class', 'chart-title')
             .attr('x', width / 2)
-            .attr('y', 18)
+            .attr('y', 18 * k)
             .style('text-anchor', 'middle')
-            .style('font-size', '15px')
+            .style('font-size', `${Math.max(12, 15 * k)}px`)
             .style('font-weight', 'bold');
 
         const tooltip = d3.select('body').append('div')
@@ -346,21 +354,51 @@ class TacticalParallelCoordinates {
             .style('z-index', '1000')
             .style('max-width', '520px');
 
-        foreground.on('mouseover', (event, d) => {
-            d3.select(event.target).attr('stroke-width', 4).attr('opacity', 1);
-            
-            this.showTooltipRadar(event, d, tooltip);
-        }).on('mousemove', (event, d) => {
-            this.positionTooltip(tooltip, event);
-        }).on('mouseleave', (event, d) => {
-            if (!this.selectedTeam || this.selectedTeam !== d.name) {
-                d3.select(event.target).attr('stroke-width', 2).attr('opacity', 0.9);
-            }
-            
-            tooltip.transition()
-                .duration(200)
-                .style('opacity', 0);
-        });
+        // Add wide, invisible hitboxes to greatly improve hoverability
+        const hitW = Math.max(10, 14 * k);
+        g.append('g')
+            .attr('class', 'hitboxes')
+            .selectAll('path')
+            .data(teams)
+            .enter()
+            .append('path')
+            .attr('d', path)
+            .attr('stroke', 'transparent')
+            .attr('stroke-width', hitW)
+            .attr('fill', 'none')
+            .style('pointer-events', 'stroke')
+            .on('mouseover', (event, d) => {
+                const idx = allTeams.indexOf(d);
+                g.select('.foreground')
+                    .select(`path:nth-child(${idx + 1})`)
+                    .attr('stroke-width', strokeHoverW)
+                    .attr('opacity', 1);
+                this.showTooltipRadar(event, d, tooltip);
+            })
+            .on('mousemove', (event, d) => {
+                this.positionTooltip(tooltip, event);
+            })
+            .on('mouseleave', (event, d) => {
+                const idx = allTeams.indexOf(d);
+                if (!this.selectedTeam || this.selectedTeam !== d.name) {
+                    g.select('.foreground')
+                        .select(`path:nth-child(${idx + 1})`)
+                        .attr('stroke-width', strokeW)
+                        .attr('opacity', 0.9);
+                }
+                tooltip.transition()
+                    .duration(200)
+                    .style('opacity', 0);
+            })
+            .on('click', (event, d) => {
+                if (this.selectedTeam === d.name) {
+                    this.selectedTeam = null;
+                    this.showAllTeams();
+                } else {
+                    this.selectedTeam = d.name;
+                    this.filterToTeam(d);
+                }
+            });
 
         console.log('Parallel coordinates complete!');
     }

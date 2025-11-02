@@ -49,6 +49,14 @@ main {
     flex-direction: column;
 }
 
+.visualization-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
 #filters-container {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
@@ -175,11 +183,13 @@ main {
     border-radius: 3px;
     background: #ddd;
     outline: none;
+    appearance: none;
     -webkit-appearance: none;
 }
 
 .range-container input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
+    appearance: none;
     width: 18px;
     height: 18px;
     border-radius: 50%;
