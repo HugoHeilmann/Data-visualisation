@@ -36,8 +36,19 @@ const ICON_STATUS = new Map();
 const parseDate = d3.timeParse("%d %b %Y");
 const fmtDateShort = d3.timeFormat("%d %b");
 const groupLetters = ["A","B","C","D","E","F","G","H"];
-const groupColorScale = d3.scaleOrdinal().domain(groupLetters).range(d3.schemeTableau10.slice(0,8));
-const KO_COLOR = "#ef4444";
+// Palette de 8 couleurs distinctes, évitant le rouge (réservé pour les K.O.)
+const groupColors = [
+  "#4ade80", // Vert vif - Groupe A
+  "#38bdf8", // Bleu ciel - Groupe B
+  "#a78bfa", // Violet - Groupe C
+  "#fbbf24", // Jaune/Or - Groupe D
+  "#fb923c", // Orange - Groupe E
+  "#2dd4bf", // Turquoise/Cyan - Groupe F
+  "#c084fc", // Violet clair - Groupe G
+  "#60a5fa"  // Bleu électrique - Groupe H
+];
+const groupColorScale = d3.scaleOrdinal().domain(groupLetters).range(groupColors);
+const KO_COLOR = "#ef4444"; // Rouge pour les phases à élimination directe
 const linkWidth = d3.scaleLinear().domain([0,8]).range([1,6]);
 
 const tooltip = d3.select("#tooltip");
