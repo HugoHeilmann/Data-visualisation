@@ -1,4 +1,4 @@
-class TacticalScatterPlot {
+class TacticalParallelCoordinates {
     constructor() {
         this.data = null;
         this.teamStats = new Map();
@@ -27,7 +27,7 @@ class TacticalScatterPlot {
     async loadData() {
         console.log('Loading World Cup data...');
         
-        this.data = await d3.csv('data/worldcup_dataset.csv', d => {
+        this.data = await d3.csv('../data/worldcup_dataset.csv', d => {
             return {
                 team1: d.team1,
                 team2: d.team2,
@@ -847,5 +847,5 @@ class TacticalScatterPlot {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Starting FIFA World Cup 2022 Tactical Analysis...');
-    new TacticalScatterPlot();
+    new TacticalParallelCoordinates();
 });
