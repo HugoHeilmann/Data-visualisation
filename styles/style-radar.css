@@ -1,0 +1,301 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #333;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+header p {
+    font-size: 1.1em;
+    color: #666;
+    font-style: italic;
+}
+
+.visualization-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+#scatter-plot-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+#scatter-plot-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.5em;
+}
+
+#chart {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+#radar-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.5s ease-out;
+}
+
+.radar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.radar-header h2 {
+    color: #333;
+    font-size: 1.5em;
+}
+
+.close-btn {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    background: #ff5252;
+    transform: scale(1.05);
+}
+
+#radar-chart {
+    display: flex;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.radar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.team-color {
+    background: #ff6b6b;
+}
+
+.average-color {
+    background: #4ecdc4;
+}
+
+.hidden {
+    display: none;
+}
+
+.x-axis, .y-axis {
+    font-size: 12px;
+}
+
+.x-axis line, .y-axis line,
+.x-axis path, .y-axis path {
+    stroke: #666;
+    stroke-width: 1px;
+}
+
+.x-axis text, .y-axis text {
+    fill: #666;
+    font-size: 11px;
+}
+
+.team-circle {
+    transition: all 0.2s ease;
+}
+
+.team-circle:hover {
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
+}
+
+.axis-label {
+    fill: #333;
+    font-weight: bold;
+}
+
+.chart-title {
+    fill: #333;
+    font-weight: bold;
+}
+
+.team-label {
+    fill: #333;
+    font-weight: bold;
+    font-size: 10px;
+    pointer-events: none;
+}
+
+.quadrant-label {
+    fill: #666;
+    font-style: italic;
+    font-size: 11px;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.radar-grid {
+    stroke: #ddd;
+    stroke-width: 1px;
+    fill: none;
+}
+
+.radar-axis {
+    stroke: #ccc;
+    stroke-width: 1px;
+}
+
+.radar-area {
+    stroke-width: 2px;
+    fill-opacity: 0.3;
+}
+
+.radar-area.team {
+    fill: #ff6b6b;
+    stroke: #ff6b6b;
+}
+
+.radar-area.average {
+    fill: #4ecdc4;
+    stroke: #4ecdc4;
+}
+
+.radar-point {
+    fill: white;
+    stroke-width: 2px;
+}
+
+.radar-point.team {
+    stroke: #ff6b6b;
+}
+
+.radar-point.average {
+    stroke: #4ecdc4;
+}
+
+.radar-label {
+    font-size: 12px;
+    font-weight: bold;
+    text-anchor: middle;
+    fill: #333;
+}
+
+.tooltip {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    z-index: 1000;
+    max-width: 200px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#scatter-plot-container {
+    animation: fadeIn 0.8s ease-out;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    header h1 {
+        font-size: 2em;
+    }
+    
+    #scatter-plot-container, #radar-container {
+        padding: 20px;
+    }
+    
+    .team-label {
+        font-size: 8px;
+    }
+    
+    .quadrant-label {
+        font-size: 9px;
+    }
+    
+    .radar-legend {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+}
+
+.team-circle:hover + .team-label {
+    font-weight: bold;
+    font-size: 12px;
+}
