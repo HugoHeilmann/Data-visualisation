@@ -1,5 +1,3 @@
-// === main.js ===
-// D3 v7 — FIFA World Cup 2022 Network Visualization (dark mode + labels)
 import { FilterMemory } from "../data/FilterMemory.js";
 
 const margin = { top: 20, right: 20, bottom: 20, left: 20 };
@@ -13,12 +11,11 @@ const svg = d3.select("#chart")
 
 const rootG = svg.append("g");
 
-// L'ordre des calques compte : d'abord liens, puis cercles/images, puis labels
 const linkG   = rootG.append("g").attr("class", "links");
 const circleG = rootG.append("g").attr("class", "fallback-nodes");
 const nodeG   = rootG.append("g").attr("class", "nodes");
 const labelG  = rootG.append("g").attr("class", "labels")
-  .attr("pointer-events", "none"); // éviter que les labels bloquent les clics
+  .attr("pointer-events", "none"); 
 
 const zoom = d3.zoom().scaleExtent([0.3, 4]).on("zoom", e => rootG.attr("transform", e.transform));
 svg.call(zoom);
@@ -36,19 +33,18 @@ const ICON_STATUS = new Map();
 const parseDate = d3.timeParse("%d %b %Y");
 const fmtDateShort = d3.timeFormat("%d %b");
 const groupLetters = ["A","B","C","D","E","F","G","H"];
-// Palette de 8 couleurs distinctes, évitant le rouge (réservé pour les K.O.)
 const groupColors = [
-  "#4ade80", // Vert vif - Groupe A
-  "#38bdf8", // Bleu ciel - Groupe B
-  "#a78bfa", // Violet - Groupe C
-  "#fbbf24", // Jaune/Or - Groupe D
-  "#fb923c", // Orange - Groupe E
-  "#2dd4bf", // Turquoise/Cyan - Groupe F
-  "#c084fc", // Violet clair - Groupe G
-  "#60a5fa"  // Bleu électrique - Groupe H
+  "#4ade80", 
+  "#38bdf8", 
+  "#a78bfa", 
+  "#fbbf24", 
+  "#fb923c", 
+  "#2dd4bf", 
+  "#c084fc", 
+  "#60a5fa"  
 ];
 const groupColorScale = d3.scaleOrdinal().domain(groupLetters).range(groupColors);
-const KO_COLOR = "#ef4444"; // Rouge pour les phases à élimination directe
+const KO_COLOR = "#ef4444"; 
 const linkWidth = d3.scaleLinear().domain([0,8]).range([1,6]);
 
 const tooltip = d3.select("#tooltip");
@@ -164,7 +160,6 @@ function refresh(){
   const isGroupCat = cat => /group\s*[a-h]/i.test(cat||"");
   const teamGroup  = t => TEAM_GROUP.get(t)||null;
 
-  // === 1) Filtrer les liens ===
   let links = ALL_LINKS.filter(l=>{
     const inGroup = isGroupCat(l.category);
     const g1 = teamGroup(getId(l.source));
@@ -190,7 +185,6 @@ function refresh(){
     return;
   }
 
-  // === 2) Liens ===
   const linkSel = linkG.selectAll("line").data(
     links, d => `${getId(d.source)}__${getId(d.target)}__${+d.date}`
   );
@@ -205,7 +199,6 @@ function refresh(){
           .attr("stroke-opacity", 1)
           .attr("stroke-width", linkWidth(d.total) + 2);
 
-        // Highlight les équipes impliquées
         const team1 = getId(d.source);
         const team2 = getId(d.target);
 
@@ -242,7 +235,6 @@ function refresh(){
           .attr("stroke-opacity", .85)
           .attr("stroke-width", linkWidth(d.total));
 
-        // Restaurer l'apparence normale des équipes
         const team1 = getId(d.source);
         const team2 = getId(d.target);
 
@@ -263,7 +255,6 @@ function refresh(){
           .attr("stroke-opacity", 1)
           .attr("stroke-width", linkWidth(d.total) + 2);
 
-        // Highlight les équipes impliquées
         const team1 = getId(d.source);
         const team2 = getId(d.target);
 
@@ -300,7 +291,6 @@ function refresh(){
           .attr("stroke-opacity", .85)
           .attr("stroke-width", linkWidth(d.total));
 
-        // Restaurer l'apparence normale des équipes
         const team1 = getId(d.source);
         const team2 = getId(d.target);
 
@@ -317,12 +307,10 @@ function refresh(){
     exit=>exit.remove()
   );
 
-  // === 3) Nœuds ===
   circleG.selectAll("circle").data(nodes, d=>d.id).join(
   enter => enter.append("circle")
     .attr("r", ICON_R - 1)
     .attr("fill", "#1e293b")
-    // contour coloré selon le groupe, sinon gris bleuté
     .attr("stroke", d => groupColorScale(d.groupLetter) || "#60a5fa")
     .attr("stroke-width", 2)
     .attr("opacity", d => ICON_STATUS.get(d.id) ? 0 : 1)
@@ -371,7 +359,6 @@ function refresh(){
       .style("cursor", "pointer")
       .on("mouseenter", function(e, d) {
         d3.select(this).attr("opacity", 0.8);
-        // Highlight le cercle correspondant aussi
         circleG.selectAll("circle").filter(c => c.id === d.id)
           .attr("stroke", "#38bdf8")
           .attr("stroke-width", 3);
@@ -408,7 +395,6 @@ function refresh(){
   nodeG.selectAll("image").attr("opacity", d=>ICON_STATUS.get(d.id)?1:0);
   circleG.selectAll("circle").attr("opacity", d=>ICON_STATUS.get(d.id)?0:1);
 
-  // === 4) Labels sous chaque drapeau ===
   labelG.selectAll("text").data(nodes, d=>d.id).join(
     enter => enter.append("text")
       .attr("text-anchor", "middle")
@@ -424,7 +410,6 @@ function refresh(){
     exit => exit.remove()
   );
 
-  // === 5) Layout ===
   const centersNow = computeCenters();
   sim.nodes(nodes);
   sim.force("link").links(links);
@@ -457,7 +442,7 @@ function phaseColor(category){
 function nameToFile(team) {
   return team
     .toUpperCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // supprime accents
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
     .replace(/&/g, "AND")
     .replace(/['’]/g, "")
     .replace(/[^A-Z0-9\s_]/g, "")
@@ -471,7 +456,6 @@ function lerp(a,b,t){ return a+(b-a)*t; }
 function showTeamDetails(teamNode) {
   currentFocusTeam = teamNode.id;
 
-  // Récupérer tous les matchs de cette équipe
   const teamMatches = RAW_ROWS.filter(m => m.team1 === teamNode.id || m.team2 === teamNode.id)
     .sort((a, b) => a.date - b.date);
 
@@ -480,7 +464,6 @@ function showTeamDetails(teamNode) {
     return;
   }
 
-  // Calculer les statistiques
   let wins = 0, draws = 0, losses = 0;
   let goalsFor = 0, goalsAgainst = 0;
 
