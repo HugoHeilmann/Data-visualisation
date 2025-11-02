@@ -1,0 +1,661 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #8A1538 0%, #5A0E24 100%);
+    color: #333;
+    min-height: 100vh;
+    max-height: 100vh;
+    padding: 5px;
+    margin: 0;
+    overflow: hidden;
+}
+
+header {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #8A1538, #B4975A);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+header p {
+    font-size: 1.1em;
+    color: #666;
+    font-style: italic;
+}
+
+main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+    height: calc(100vh - 10px);
+    display: flex;
+    flex-direction: column;
+}
+
+.visualization-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+#filters-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1000;
+}
+
+#filters-container h3 {
+    margin: 0 0 5px 0;
+    color: #8A1538;
+    font-size: 0.9em;
+    font-weight: 700;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    align-items: stretch;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    position: relative;
+    justify-content: flex-end;
+    z-index: 1001;
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: #555;
+    font-size: 0.8em;
+}
+
+.filter-group select {
+    padding: 5px 8px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.8em;
+    background: white;
+    transition: border-color 0.3s;
+    width: 100%;
+}
+
+.filter-group select:focus {
+    border-color: #8A1538;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(138, 21, 56, 0.1);
+}
+
+.filter-group input[type="text"] {
+    padding: 5px 8px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.8em;
+    background: white;
+    transition: border-color 0.3s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.filter-group input[type="text"]:focus {
+    border-color: #8A1538;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(138, 21, 56, 0.1);
+}
+
+.suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 2px solid #8A1538;
+    border-radius: 8px;
+    margin-top: 2px;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    z-index: 10000;
+    width: 100%;
+}
+
+.suggestions-list.hidden {
+    display: none;
+}
+
+.suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.9em;
+    border-bottom: 1px solid #eee;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: #f0f0ff;
+}
+
+.suggestion-item.selected {
+    background: #8A1538;
+    color: white;
+}
+
+.range-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.range-container input[type="range"] {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #ddd;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.range-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #8A1538;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.range-container input[type="range"]::-webkit-slider-thumb:hover {
+    background: #B4975A;
+}
+
+.range-container span {
+    font-size: 0.8em;
+    color: #666;
+    font-weight: 600;
+    min-width: 35px;
+}
+
+.reset-btn {
+    padding: 5px 12px;
+    background: linear-gradient(45deg, #8A1538, #B4975A);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+    align-self: flex-end;
+}
+
+.reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(138, 21, 56, 0.4);
+}
+
+#scatter-plot-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    flex-shrink: 0;
+    min-height: 25px;
+}
+
+.chart-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1em;
+}
+
+#selection-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+    color: white;
+    border-radius: 15px;
+    font-size: 0.8em;
+    animation: slideInLeft 0.3s ease;
+    white-space: nowrap;
+}
+
+#selection-indicator.hidden {
+    display: none;
+}
+
+.clear-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 12px;
+    padding: 3px 6px;
+    font-size: 0.75em;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.clear-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+#chart {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#chart svg {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+}
+
+.x-axis, .y-axis {
+    font-size: 12px;
+}
+
+.x-axis line, .y-axis line,
+.x-axis path, .y-axis path {
+    stroke: #666;
+    stroke-width: 1px;
+}
+
+.x-axis text, .y-axis text {
+    fill: #666;
+    font-size: 11px;
+}
+
+.team-circle {
+    transition: all 0.2s ease;
+}
+
+.team-circle:hover {
+    filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
+}
+
+.axis-label {
+    fill: #333;
+    font-weight: bold;
+}
+
+.chart-title {
+    fill: #333;
+    font-weight: bold;
+}
+
+.team-label {
+    fill: #333;
+    font-weight: bold;
+    font-size: 10px;
+    pointer-events: none;
+}
+
+.quadrant-label {
+    fill: #666;
+    font-style: italic;
+    font-size: 11px;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.tooltip {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 12px;
+    z-index: 1000;
+    max-width: 200px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.foreground path {
+    transition: stroke-width 0.15s, opacity 0.15s;
+}
+
+.background path {
+    stroke-width: 1px;
+}
+
+.axis-label {
+    font-size: 12px;
+    fill: #333;
+    font-weight: 600;
+}
+
+.axis line, .axis path {
+    stroke: #bbb;
+}
+
+.axis text {
+    font-size: 10px;
+    fill: #666;
+}
+
+.tooltip {
+    pointer-events: none;
+    border-radius: 6px;
+}
+
+.tooltip-radar {
+    pointer-events: none !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: opacity 0.2s ease;
+}
+
+.tooltip-radar svg {
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    header h1 {
+        font-size: 2em;
+    }
+    
+    #scatter-plot-container {
+        padding: 20px;
+    }
+    
+    .team-label {
+        font-size: 8px;
+    }
+    
+    .quadrant-label {
+        font-size: 9px;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#scatter-plot-container {
+    animation: fadeIn 0.8s ease-out;
+}
+
+.team-circle:hover + .team-label {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.legend-btn {
+    padding: 8px 16px;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+    box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
+}
+
+.legend-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.5);
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeInModal 0.3s ease;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+@keyframes fadeInModal {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    max-width: 900px;
+    width: 90%;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    animation: slideInModal 0.3s ease;
+    overflow: hidden;
+}
+
+@keyframes slideInModal {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    background: linear-gradient(135deg, #8A1538 0%, #5A0E24 100%);
+    color: white;
+    border-radius: 20px 20px 0 0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.8em;
+    font-weight: 700;
+}
+
+.close-modal {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.close-modal:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 30px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.legend-section {
+    margin-bottom: 35px;
+}
+
+.legend-section:last-child {
+    margin-bottom: 0;
+}
+
+.legend-section h3 {
+    color: #8A1538;
+    font-size: 1.4em;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #B4975A;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stat-item {
+    margin-bottom: 18px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #B4975A;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item strong {
+    display: block;
+    color: #333;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+.stat-item p {
+    color: #555;
+    font-size: 0.95em;
+    line-height: 1.6;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+    
+    .modal-header {
+        padding: 20px;
+    }
+    
+    .modal-header h2 {
+        font-size: 1.4em;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .legend-section h3 {
+        font-size: 1.2em;
+    }
+    
+    .stat-item {
+        padding: 12px;
+    }
+    
+    .stat-item strong {
+        font-size: 1em;
+    }
+    
+    .stat-item p {
+        font-size: 0.9em;
+    }
+}
