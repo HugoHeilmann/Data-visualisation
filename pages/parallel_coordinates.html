@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>World Cup 2022 - Analyse Tactique Interactive</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  
+  <main>
+    <div class="visualization-container">
+      <div id="filters-container">
+        <h3>Filtres</h3>
+        <div class="filters-grid">
+          <div class="filter-group">
+            <label>Rechercher un pays :</label>
+            <input type="text" id="country-search" placeholder="Tapez le nom d'un pays..." autocomplete="off">
+            <div id="country-suggestions" class="suggestions-list hidden"></div>
+          </div>
+          
+          <div class="filter-group">
+            <label>Groupe :</label>
+            <select id="group-filter">
+              <option value="all" selected>Tous les groupes</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label>Phase finale atteinte :</label>
+            <select id="phase-filter">
+              <option value="all" selected>Toutes les phases</option>
+              <option value="Group stage">Phase de groupes</option>
+              <option value="Round of 16">8ème de finale</option>
+              <option value="Quarter-final">Quart de finale</option>
+              <option value="Semi-final">Demi-finale</option>
+              <option value="Final">Finale</option>
+            </select>
+          </div>
+          
+          <button id="reset-filters" class="reset-btn">Réinitialiser</button>
+        </div>
+      </div>
+
+      <div id="scatter-plot-container">
+        <div class="chart-header">
+          <h2>Coordonnées Parallèles : Profils Tactiques</h2>
+          <div class="header-actions">
+            <button id="legend-btn" class="legend-btn">ℹ️ Légende des Statistiques</button>
+            <div id="selection-indicator" class="hidden">
+              <span>Équipe sélectionnée : <strong id="selected-team-indicator"></strong></span>
+              <button id="clear-selection" class="clear-btn">✕ Désélectionner</button>
+            </div>
+          </div>
+        </div>
+        <div id="chart"></div>
+      </div>
+
+      <div id="legend-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Légende des Statistiques</h2>
+            <button id="close-legend" class="close-modal">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="legend-section">
+              <h3>Radar Chart — Profil Brut</h3>
+              <p>Le radar compare les volumes moyens par match. Les valeurs sont normalisées sur l'ensemble des équipes. Les métriques marquées « inversé » signifient que plus haut = mieux (car cela représente « moins subi »).</p>
+              <div class="stat-item">
+                <strong>Buts p. Match</strong>
+                <p>Nombre moyen de buts marqués par match.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Buts encaissés p. Match <em>(inversé)</em></strong>
+                <p>Moins une équipe encaisse, plus le score est élevé sur le radar.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Tirs p. Match</strong>
+                <p>Nombre moyen de tirs tentés par match.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Tirs cadrés subis p. Match <em>(inversé)</em></strong>
+                <p>Moins l'adversaire cadre, plus le score est élevé sur le radar.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Passes p. Match</strong>
+                <p>Nombre moyen de passes tentées par match.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Pressions défensives p. Match</strong>
+                <p>Volume d'actions de pressing par match.</p>
+              </div>
+            </div>
+
+            <div class="legend-section">
+              <h3>Coordonnées Parallèles — Style de Jeu</h3>
+              <p>Axes centrés sur les tendances et pourcentages, communs à toutes les équipes pour permettre la comparaison.</p>
+              <div class="stat-item">
+                <strong>Possession %</strong>
+                <p>Part du temps passé avec le ballon.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Efficacité %</strong>
+                <p>Part des tirs convertis en buts.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Précision Passes %</strong>
+                <p>Part des passes réussies.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Précision Tirs %</strong>
+                <p>Part des tirs qui sont cadrés.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Percées Réussies %</strong>
+                <p>Part des percées (line breaks) aboutissant.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Jeu Central</strong>
+                <p>Part des attaques passant par l'axe.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Jeu Latéral</strong>
+                <p>Part des attaques passant par les ailes.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Fautes p. Match</strong>
+                <p>Indication de l'intensité/discipline défensive.</p>
+              </div>
+            </div>
+
+            <div class="legend-section">
+              <h3>Couleurs des Groupes</h3>
+              <div class="stat-item">
+                <p>Chaque ligne est colorée selon le groupe initial (Group A, B, …). Les couleurs aident à repérer les équipes d'un même groupe.</p>
+              </div>
+            </div>
+
+            <div class="legend-section">
+              <h3>Comment utiliser la visualisation</h3>
+              <div class="stat-item">
+                <strong>Survol (Hover)</strong>
+                <p>Passez la souris sur une ligne pour afficher le radar détaillé et la comparaison à la moyenne du tournoi.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Clic</strong>
+                <p>Cliquez pour sélectionner une équipe. Les filtres (pays, groupe, phase) se mettent à jour automatiquement. Cliquez à nouveau pour désélectionner.</p>
+              </div>
+              <div class="stat-item">
+                <strong>Filtres</strong>
+                <p>Affinez par groupe, phase finale ou via la recherche de pays.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
