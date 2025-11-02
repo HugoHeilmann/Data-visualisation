@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisation Interactive - Données FIFA</title>
+    <link rel="stylesheet" href="../styles/scatterplot.css" />
+</head>
+<body>
+    <a href="../index.html" class="back-button">Retour à l'accueil</a>
+    <div class="container">
+
+        <h1>Analyse Interactive des Matchs FIFA 2022</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Axe X :</label>
+                <select id="x-axis">
+                    <option value="possession_team1">Possession Équipe 1 (%)</option>
+                    <option value="attempts_team1">Tentatives Équipe 1</option>
+                    <option value="passes_completed_team1">Passes Complétées Équipe 1</option>
+                    <option value="goals_team1">Buts Équipe 1</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Axe Y :</label>
+                <select id="y-axis">
+                    <option value="goals_team1">Buts Équipe 1</option>
+                    <option value="on_target_team1">Tirs Cadrés Équipe 1</option>
+                    <option value="yellow_cards_team1">Cartons Jaunes Équipe 1</option>
+                    <option value="possession_team1">Possession Équipe 1 (%)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Filtrer par Phase :</label>
+                <select id="phase-filter">
+                    <option value="all">Toutes les phases</option>
+                    <option value="Group A">Groupe A</option>
+                    <option value="Group B">Groupe B</option>
+                    <option value="Group C">Groupe C</option>
+                    <option value="Group D">Groupe D</option>
+                    <option value="Group E">Groupe E</option>
+                    <option value="Group F">Groupe F</option>
+                    <option value="Group G">Groupe G</option>
+                    <option value="Group H">Groupe H</option>
+                    <option value="Round of 16">8èmes de finale</option>
+                    <option value="Quarter-final">Quarts de finale</option>
+                    <option value="Semi-final">Demi-finales</option>
+                    <option value="Final">Finale</option>
+                </select>
+            </div>
+
+            <button id="reset-btn">Reset Vue</button>
+        </div>
+
+        <div class="viz-container">
+            <div class="overview">
+                <div id="scatter-plot"></div>
+                <div class="legend" id="legend"></div>
+            </div>
+
+            <div class="details">
+                <h2>Détails du Match</h2>
+                <div id="match-details">
+                    <p style="color: #7f8c8d; font-style: italic;">
+                        Cliquez sur un point pour voir les détails du match
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="module" src="../js/scatterplot.js"></script>
+</body>
+</html>
